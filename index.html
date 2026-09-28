@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>广州好去处</title>
+<style>
+:root{
+  --primary:#3FA97A; --primary-deep:#2E7D5B; --accent:#F6B455;
+  --teal:#23C3C0; --bg:#F3F7F4; --ink:#2b3a33; --muted:#7b8f86;
+  --card:#ffffff; --line:#e3efe9; --danger:#d96a5a; --hot:#E85D3F; --done:#5F7A8C;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.6;}
+.wrap{max-width:1080px;margin:0 auto;padding:14px 16px 76px;}
+
+/* ===== 顶栏 ===== */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.brand h1{font-size:26px;color:var(--primary-deep);letter-spacing:1px;}
+.brand p{font-size:12px;color:var(--muted);}
+.top-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.time-select{position:relative;}
+.time-select select{
+  appearance:none;-webkit-appearance:none;border:1px solid var(--line);border-radius:999px;
+  background:var(--card);color:var(--primary-deep);font-size:13px;font-weight:600;
+  padding:8px 30px 8px 14px;cursor:pointer;outline:none;
+}
+.time-select::after{content:"▾";position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--primary);pointer-events:none;font-size:12px;}
+
+/* ===== 人群筛选（保留） ===== */
+.filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px;}
+.crowd-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.crowd-chip{
+  border:1px solid var(--line);border-radius:999px;background:var(--card);
+  font-size:12px;color:var(--muted);padding:6px 12px;cursor:pointer;user-select:none;
+}
+.crowd-chip.active{border-color:var(--primary);color:var(--primary-deep);background:#e9f6f0;font-weight:600;}
+.result-info{font-size:12px;color:var(--muted);margin:0 0 10px;}
+
+/* ===== 导航 ===== */
+nav.tabs{
+  display:flex;gap:8px;margin:0 0 6px;padding:8px 0 10px;
+  overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  position:sticky;top:0;z-index:60;background:var(--bg);
+}
+nav.tabs::-webkit-scrollbar{display:none;}
+.tab{
+  flex:1 1 0;border:1px solid var(--line);border-radius:999px;background:var(--card);
+  padding:8px 6px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;text-align:center;
+}
+.tab[aria-selected="true"]{background:var(--primary);color:#fff;border-color:var(--primary);}
+.tab[data-page="hot"][aria-selected="true"]{background:var(--hot);border-color:var(--hot);}
+
+/* ===== 页面 ===== */
+.page{display:none;}
+.page.active{display:block;}
+.page-head{font-size:18px;font-weight:700;color:var(--primary-deep);margin:4px 0 12px;}
+.page-head .note{font-size:12px;color:var(--muted);font-weight:400;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px;}
+
+/* ===== 首页聚合分组 ===== */
+.group-block{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 14px 18px;margin:20px 0;box-shadow:0 2px 10px rgba(63,169,122,.06);}
+.group-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:800;margin:0 0 12px;padding:2px 0 2px 12px;border-left:5px solid var(--primary);}
+.group-title .g-icon{font-size:16px;}
+.group-title .g-count{font-size:12px;color:var(--muted);font-weight:400;}
+
+/* ===== 卡片 ===== */
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:14px 14px 12px;display:flex;flex-direction:column;gap:6px;position:relative;
+  transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;
+}
+.card:hover,.card:focus-within{transform:translateY(-2px);box-shadow:0 6px 18px rgba(63,169,122,.12);border-color:var(--teal);}
+.card.expired{opacity:.55;filter:grayscale(.4);}
+.card.mark-no{opacity:.6;background:#f7f7f5;}
+.card.mark-want{border-color:var(--accent);}
+.card.mark-done{border-color:var(--primary);}
+.tag-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;}
+.chip{border-radius:999px;padding:2px 8px;font-weight:600;font-size:11px;}
+time{color:var(--muted);font-size:11px;}
+.badge-main{background:var(--primary);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;}
+.badge-end{background:var(--danger);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;}
+.badge-soon{background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;}
+.badge-mark{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;color:#fff;}
+.badge-mark.want{background:var(--accent);}
+.badge-mark.done{background:var(--primary);}
+.badge-mark.no{background:#b8b8b2;}
+.multisrc-tag{background:#e9f6f0;color:var(--primary-deep);font-size:10px;font-weight:600;border-radius:999px;padding:2px 7px;border:1px solid #bfe6d4;}
+.heat-tag{font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;color:#fff;}
+.heat-tag.hot{background:var(--hot);}
+.heat-tag.warm{background:var(--accent);color:#7a5210;}
+h3.title{font-size:15px;font-weight:700;color:var(--ink);line-height:1.4;}
+p.desc{font-size:13px;color:#4a5b52;}
+.meta{font-size:12px;color:var(--muted);margin-top:auto;}
+.meta a{color:var(--primary-deep);text-decoration:underline;word-break:break-all;}
+.src-link{color:var(--primary-deep);font-size:11px;text-decoration:underline;white-space:nowrap;}
+.mark-row{border-top:1px dashed var(--line);padding-top:8px;margin-top:4px;}
+.mark-btns{display:flex;gap:8px;flex-wrap:wrap;}
+.mark-btn{
+  border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 16px;
+  font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s ease;
+}
+.mark-btn:hover{border-color:var(--accent);}
+.mark-btn.want.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700;}
+.mark-btn.done.on{background:var(--primary);color:#fff;border-color:var(--primary);font-weight:700;}
+.mark-btn.no.on{background:#b8b8b2;color:#fff;border-color:#b8b8b2;font-weight:700;}
+
+/* ===== 热门区（首页·暖琥珀色系，与天气横幅/分类容器明显区分） ===== */
+section.hot-section{margin:8px 0 4px;}
+.hot-block-title{
+  font-size:16px;font-weight:800;color:#b07a2a;margin:14px 0 10px;padding:2px 0 2px 12px;
+  border-left:5px solid var(--accent);display:flex;align-items:center;gap:6px;
+}
+.hot-block-title .sub{font-size:12px;font-weight:400;color:#c9a86a;}
+.hot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px;}
+.hot-card{
+  background:linear-gradient(160deg,#fdf7ec,#fbf0dc);border:1px solid #efdcba;border-radius:14px;
+  padding:14px;display:flex;flex-direction:column;gap:6px;position:relative;
+}
+.hot-card.mark-no{opacity:.6;background:#f7f7f5;}
+.hot-card.mark-want{border-color:var(--accent);}
+.hot-card.mark-done{border-color:var(--primary);}
+
+/* ===== 天气卡（首页） ===== */
+.weather-card{
+  background:linear-gradient(135deg,#2E9E6C,#23C3C0);border:none;border-radius:18px;
+  padding:18px 18px 14px;margin:16px 0 6px;color:#fff;box-shadow:0 6px 20px rgba(35,195,192,.25);
+}
+.weather-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.weather-title{font-size:15px;font-weight:800;color:#fff;}
+.weather-index{display:flex;align-items:center;gap:8px;font-size:13px;color:#eafaf4;}
+.weather-index b{color:#fff;font-size:14px;}
+.weather-toggle{
+  border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.18);color:#fff;border-radius:999px;
+  font-size:12px;font-weight:600;padding:5px 12px;cursor:pointer;white-space:nowrap;
+}
+.weather-toggle:hover{border-color:#fff;}
+.weather-split{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.weather-slot{border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.55;background:rgba(255,255,255,.94);}
+.weather-slot.rain{border:1px solid #f3e3dd;color:#7a5a52;}
+.weather-slot.sun{border:1px solid #dcead0;color:#4f6b3a;}
+.weather-slot .slot-t{font-weight:700;font-size:13px;display:block;margin-bottom:2px;}
+.weather-slot.rain .slot-t{color:#c05a48;}
+.weather-slot.sun .slot-t{color:#5d8a3f;}
+.weather-bar{margin-top:12px;}
+.weather-bar-label{display:flex;justify-content:space-between;font-size:11px;color:#dff6ee;margin-bottom:4px;}
+.weather-bar-track{height:10px;border-radius:999px;background:rgba(255,255,255,.35);overflow:hidden;display:flex;}
+.weather-bar-seg{height:100%;}
+.weather-bar-seg.rain{background:linear-gradient(90deg,#b8d4ee,#8fb4e0);}
+.weather-bar-seg.sun{background:linear-gradient(90deg,#fff3c4,#ffe08a);box-shadow:0 0 8px rgba(255,255,255,.6);}
+.weather-tip{margin-top:10px;font-size:12.5px;color:#fff;font-weight:600;text-align:center;}
+.weather-detail{display:none;margin-top:10px;border-top:1px dashed rgba(255,255,255,.5);padding-top:10px;font-size:12.5px;color:#f0fbf7;line-height:1.8;}
+.weather-card.open .weather-detail{display:block;}
+.weather-card.open .weather-toggle{background:#fff;color:#2E9E6C;border-color:#fff;}
+
+/* ===== 返回顶部 ===== */
+.to-top{
+  display:block;margin:18px auto 10px;border:1px solid var(--line);background:var(--card);
+  color:var(--primary-deep);border-radius:999px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer;
+}
+.to-top:hover{border-color:var(--primary);}
+
+/* ===== 底部状态栏 ===== */
+.bottom-bar{
+  position:fixed;left:0;right:0;bottom:0;z-index:100;
+  background:rgba(255,255,255,.96);backdrop-filter:blur(8px);
+  border-top:1px solid var(--line);display:flex;justify-content:center;gap:8px;padding:8px 16px calc(8px + env(safe-area-inset-bottom));
+}
+.bottom-tab{
+  flex:0 0 auto;min-width:108px;border:1px solid var(--line);border-radius:999px;background:#fff;
+  padding:9px 18px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;text-align:center;
+}
+.bottom-tab[aria-selected="true"]{background:var(--primary);color:#fff;border-color:var(--primary);}
+.bottom-tab[data-view="hot"][aria-selected="true"]{background:var(--hot);border-color:var(--hot);}
+
+/* ===== 我的页 ===== */
+.mine-empty{text-align:center;padding:48px 16px;color:var(--muted);}
+.mine-empty p{margin-bottom:14px;}
+.mine-tools{display:flex;justify-content:center;gap:10px;margin:0 0 12px;flex-wrap:wrap;}
+.mine-clear{
+  border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 18px;
+  font-size:13px;color:var(--muted);cursor:pointer;
+}
+.mine-clear:hover{border-color:var(--danger);color:var(--danger);}
+.mine-share{
+  border:1px solid var(--primary);background:var(--primary);border-radius:999px;padding:8px 18px;
+  font-size:13px;font-weight:600;color:#fff;cursor:pointer;
+}
+.mine-share:hover{background:var(--primary-deep);border-color:var(--primary-deep);}
+.mine-empty .mine-share{margin:0 auto 12px;}
+.mine-group-title{font-size:14px;font-weight:800;margin:12px 0 8px;display:flex;align-items:center;gap:6px;}
+
+/* ===== 页脚 ===== */
+footer{text-align:center;font-size:11px;color:var(--muted);padding:14px 0 8px;line-height:1.8;}
+footer .updated-time{font-size:12px;color:var(--primary-deep);font-weight:600;margin-bottom:6px;}
+footer .updated-time b{color:#c2542f;font-weight:800;}
+footer .disclaimer{color:#9aa79f;}
+
+/* ===== 手机适配 ===== */
+@media(max-width:640px){
+  .wrap{padding:12px 12px 80px;}
+  .brand h1{font-size:22px;}
+  .topbar{gap:8px;}
+  .grid,.hot-grid{grid-template-columns:1fr;}
+  .weather-split{grid-template-columns:1fr;}
+  .card,.hot-card{padding:12px;}
+
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="topbar">
+    <div class="brand">
+      <h1>广州好去处</h1>
+      <p>广州HOT · 展览演出 · 市集探店 · 户外古街 · 电影读书</p>
+    </div>
+    <div class="top-controls">
+      <div class="time-select">
+        <select id="timeWindow" aria-label="时间筛选">
+          <option value="14" selected>近2周</option>
+          <option value="30">近1个月</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- 分类标签（7个：首页|展览演出|市集探店|户外古街|电影读书|广州HOT|我的） -->
+  <nav class="tabs" id="tabNav" aria-label="分类导航"></nav>
+  <!-- 人群筛选（位于标签下方） -->
+  <div class="filter-bar" id="filterBar">
+    <div class="crowd-chips">
+      <button class="crowd-chip active" type="button" data-crowd="">全部</button>
+      <button class="crowd-chip" type="button" data-crowd="单人">单人</button>
+      <button class="crowd-chip" type="button" data-crowd="情侣">情侣</button>
+      <button class="crowd-chip" type="button" data-crowd="带娃">带娃</button>
+    </div>
+  </div>
+
+  <!-- ===== 首页（聚合：上方天气+热门，下方全部信息按标签分组） ===== -->
+  <div id="page-home" class="page active" role="tabpanel" aria-label="首页">
+    <div class="weather-card" id="weatherCard">
+      <div class="weather-head">
+        <span class="weather-title">🌤 本周天气适合指数</span>
+        <span class="weather-index">前段 <b>60</b> · 后段 <b>90</b>/100</span>
+        <button class="weather-toggle" type="button" aria-expanded="false">点击展开天气详情</button>
+      </div>
+      <div class="weather-split">
+        <div class="weather-slot rain">
+          <span class="slot-t">☔ 10/1–10/4 有雨（24–33℃）</span>
+          室内展览演出、市集探店、电影读书优先
+        </div>
+        <div class="weather-slot sun">
+          <span class="slot-t">☀️ 10/5–10/7 转晴（18–26℃）</span>
+          户外古街最佳：帽峰山红枫、海珠citywalk、沙湾古镇，记得带薄外套
+        </div>
+      </div>
+      <div class="weather-bar">
+        <div class="weather-bar-label"><span>晴好适宜度</span><span id="weatherBarText">前段较低 · 后段高</span></div>
+        <div class="weather-bar-track">
+          <div class="weather-bar-seg rain" style="width:44%;"></div>
+          <div class="weather-bar-seg sun" style="width:56%;"></div>
+        </div>
+      </div>
+      <div class="weather-tip">前段雨天室内优先 → 后段秋高气爽户外最佳</div>
+      <div class="weather-detail" id="weatherDetail">
+        国庆假期天气：10/1–10/4 受降雨影响，湿度大、体感闷热（24–33℃），适合安排室内活动；<br>
+        10/5–10/7 冷空气南下转晴，气温回落至 18–26℃，秋高气爽，是户外徒步、古村游玩的最佳窗口。<br>
+        建议把户外行程排在假期后半段，出行前再刷新一次天气预报确认。
+      </div>
+    </div>
+
+    <section class="hot-section" aria-label="各标签热门推荐">
+      <div class="hot-block-title"></div>
+      <div class="hot-grid" id="hotGrid"></div>
+    </section>
+
+    <!-- 全部信息按标签分组 -->
+    <div id="homeGroups"></div>
+  </div>
+
+  <!-- ===== 广州HOT页 ===== -->
+  <div id="page-hot" class="page" role="tabpanel" aria-label="广州HOT"></div>
+  <!-- ===== 四个分类标签页 ===== -->
+  <div id="page-exshow" class="page" role="tabpanel" aria-label="展览演出"></div>
+  <div id="page-marketfood" class="page" role="tabpanel" aria-label="市集探店"></div>
+  <div id="page-natureancient" class="page" role="tabpanel" aria-label="户外古街"></div>
+  <div id="page-moviebook" class="page" role="tabpanel" aria-label="电影读书"></div>
+
+  <!-- ===== 我的页 ===== -->
+  <div id="page-mine" class="page" role="tabpanel" aria-label="我的"></div>
+
+  <footer>
+    <div class="updated-time">🔄 内容更新于 <b id="updatedAt">2026-09-28</b> · 每 3 天自动更新</div>
+    <div>信息来自本地宝、小红书、官方公众号、大麦、美团、豆瓣、知乎等多来源交叉核对，可能存在变动</div>
+    <div class="disclaimer">出行前请以官方最新公告为准 · 价格/档期/免费政策可能调整</div>
+  </footer>
+</div>
+
+<noscript><p style="text-align:center;padding:40px;color:#7b8f86;">请启用 JavaScript 以查看完整推荐内容。</p></noscript>
+<!-- 底部状态栏：首页 / 广州HOT / 我的 -->
+<div class="bottom-bar" id="bottomBar">
+  <button class="bottom-tab" type="button" data-view="home" aria-selected="true">🏠 首页</button>
+  <button class="bottom-tab" type="button" data-view="hot" aria-selected="false">🔥 广州HOT</button>
+  <button class="bottom-tab" type="button" data-view="mine" aria-selected="false">👤 我的</button>
+</div>
+
+<script>
+/* ================= 数据层 ================= */
+const TAGS = ["exshow", "marketfood", "natureancient", "moviebook"];
+const TAG_NAME = {"home": "首页", "hot": "广州HOT", "exshow": "展览演出", "marketfood": "市集探店", "natureancient": "户外古街", "moviebook": "电影读书", "mine": "我的"};
+const TAG_ICON = {"home": "🏠", "hot": "🔥", "exshow": "🎭", "marketfood": "🍜", "natureancient": "🌿", "moviebook": "🎬", "mine": "👤"};
+const TAG_NOTE = {"hot": "（本周全网热议 · 多平台交叉验证）", "exshow": "（展览 / 漫展 / 演出）", "marketfood": "（市集 / 美食探店）", "natureancient": "（户外自然 / 小众古街）", "moviebook": "（在映电影 / 豆瓣读书）"};
+const TAG_COLOR = {"home": "#3FA97A", "hot": "#E85D3F", "exshow": "#3FA97A", "marketfood": "#F6B455", "natureancient": "#23C3C0", "moviebook": "#5F7A8C", "mine": "#5F7A8C"};
+const TAG_CHIP_BG = {"home": "#e4f6ef", "hot": "#fdeee9", "exshow": "#e4f6ef", "marketfood": "#fdeeda", "natureancient": "#e4f6ef", "moviebook": "#eef2f5", "mine": "#eef2f5"};
+const TAG_CHIP_FG = {"home": "#177e7c", "hot": "#c2542f", "exshow": "#177e7c", "marketfood": "#b07a2a", "natureancient": "#177e7c", "moviebook": "#5F7A8C", "mine": "#5F7A8C"};
+const TAG_LINK = {"home": "#2E7D5B", "hot": "#c2542f", "exshow": "#2E7D5B", "marketfood": "#b07a2a", "natureancient": "#177e7c", "moviebook": "#5F7A8C", "mine": "#5F7A8C"};
+
+const ITEMS = [{"id": 0, "title": "南越王博物院·尼罗河的赠礼（古埃及展）", "chip": "展览", "time": "至10/11 周日", "desc": "180件套古埃及文物近95%首次来华，VR金字塔沉浸体验。。展期至10/11，国庆是最后观展窗口，建议周中或上午去；展厅需要2-3小时细看，VR体验记得提前排队。", "meta": "⏱ 2–3h｜📍市区·越秀｜👤 单人/情侣/带娃｜🚇 2号线越秀公园站E口｜免费展区·特展另购<br>🔗 <a href=\"https://www.nywmuseum.org.cn/Exhibition/Index/Exhibition\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">官网</a>", "start": "2026-09-10", "end": "2026-10-11", "badge": "", "multisrc": true, "crowd": "单人/情侣/带娃", "tag": "exshow"}, {"id": 1, "title": "广东省博物馆（外贸千年+大师展）", "chip": "展览", "time": "至10/18 周日", "desc": "「互利天下」外贸千年大展+格拉斯哥大师作品展（至10/18）+张九龄微展。。三层主题展一次看全，含岭南文物与欧洲艺术对话；适合慢慢逛2-3小时，看完顺路逛花城广场。", "meta": "⏱ 2–3h｜📍市区·天河｜👤 单人/情侣/带娃｜🚇 3号线珠江新城站｜免费·需预约<br>🔗 <a href=\"https://gzdaily.dayoo.com/h5/html5/2026-09/28/content_873_915610.htm\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">广州日报</a>", "start": "2026-09-01", "end": "2026-10-18", "badge": "", "multisrc": true, "crowd": "单人/情侣/带娃", "tag": "exshow"}, {"id": 2, "title": "广州艺术博物院·城脉千年展", "chip": "展览", "time": "10/1–6 周四–周二", "desc": "「城脉千年」广州建城2240年得名1800年专题展，410余件文物。。从秦汉到近现代串起广州史，适合喜欢历史的慢慢看；免费展但需预约，与生活市集联逛体验更完整。", "meta": "⏱ 2–3h｜📍市区·海珠｜👤 单人/情侣/带娃｜🚇 12号线赤岗塔站B口｜免费<br>🔗 <a href=\"https://wx.gzam.com.cn/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">官网</a>", "start": "2026-10-01", "end": "2026-10-06", "badge": "", "multisrc": true, "crowd": "单人/情侣/带娃", "tag": "exshow"}, {"id": 3, "title": "一念敦煌·石窟艺术大展", "chip": "展览", "time": "至10/31 周六", "desc": "敦煌艺术宝藏多项\"广州首发\"，横跨国庆档年度大展。。展至10/31，展品含壁画高保真复制与数字洞窟，非节假日场次人更少；建议预留2-3小时，讲解场次值得跟。", "meta": "⏱ 2–3h｜📍市区·海珠｜👤 单人/情侣/带娃｜🚇 12号线赤岗塔站B口｜特展购票<br>🔗 <a href=\"https://www.gz.gov.cn/zt/zzyyzq/kjfwzq/wlzx/content/post_10768021.html\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">广州市政府</a>", "start": "2026-09-01", "end": "2026-10-31", "badge": "", "multisrc": true, "crowd": "单人/情侣/带娃", "tag": "exshow"}, {"id": 4, "title": "广东美术馆（白鹅潭新馆）", "chip": "展览", "time": "假期开放", "desc": "水墨年鉴十周年+陈家泠艺术展等多展同开，假期开放夜间场。多展同开性价比高，晚间场次人少清静；适合文艺向的傍晚行程，闭馆时间以官方为准。", "meta": "⏱ 2–3h｜📍市区·白鹅潭｜👤 单人/情侣｜🚇 1号线芳村站｜免费<br>🔗 <a href=\"https://www.gdmoa.org/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">官网</a>", "start": "2026-09-01", "end": "2026-10-31", "badge": "", "multisrc": false, "crowd": "单人/情侣", "tag": "exshow"}, {"id": 5, "title": "CICF×AGF动漫游戏盛典（琶洲）", "chip": "漫展", "time": "10/2–5 周五–周一", "desc": "8万㎡、千余IP、coser声优签售、金龙奖赛事，湾区年度次元盛典。。预售98元起，现场票更贵，建议早买；展期10/2-5，安排一整天也不够逛，优先冲限定谷子和签售排号。", "meta": "⏱ 半天–1天｜📍市区·琶洲｜👤 单人/情侣/带娃｜🚇 8/11号线琶洲站C口｜98–168元<br>🔗 <a href=\"http://www.cicfexpo.com/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#c25a3a;\">官网</a>", "start": "2026-10-02", "end": "2026-10-05", "badge": "本周主推", "multisrc": true, "crowd": "单人/情侣/带娃", "tag": "exshow"}, {"id": 6, "title": "广州AP动漫嘉年华", "chip": "漫展", "time": "10/1 周四", "desc": "国庆首日漫展，健康港星河COCO Park负一层哆元空间。。商场内场次交通方便，逛展顺路吃饭逛街；规模中等，适合想轻松逛展、不想排长队的人。", "meta": "⏱ 3–5h｜📍市区·芳村｜👤 单人/情侣｜🚇 1号线西朗站｜约50元<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7678358558786645489\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#c25a3a;\">漫展汇总</a>", "start": "2026-10-01", "end": "2026-10-01", "badge": "", "multisrc": true, "crowd": "单人/情侣", "tag": "exshow"}, {"id": 7, "title": "孤独摇滚×哭泣少女乐队 同人Only展", "chip": "漫展", "time": "10/4 周日", "desc": "晚间场17:30–22:00，MaoLivehouse永庆坊店，同人摊+Live氛围。夜场漫展在永庆坊景区内，白天逛骑楼老街、晚上进场，一条龙安排；livehouse区域注意身高遮挡，早点去占位。", "meta": "⏱ 4h｜📍市区·永庆坊｜👤 单人/情侣（同人向）｜🚇 1号线黄沙站C口｜约88元<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7689686596521920689\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#c25a3a;\">漫展信息</a>", "start": "2026-10-04", "end": "2026-10-04", "badge": "", "multisrc": false, "crowd": "单人/情侣（同人向）", "tag": "exshow"}, {"id": 8, "title": "蔚蓝档案同人Only2.0", "chip": "漫展", "time": "10/5 周一", "desc": "祈福会展中心，玩家向同人展，周边摊+舞台活动集中。相比大型展会更安静，适合慢慢淘周边和同人本；场内有舞台活动轮番上，玩家向观众体验更佳。", "meta": "⏱ 3–5h｜📍周边·番禺祈福（车程约40min）｜👤 单人/情侣｜🚇 3号线市桥站转公交｜约78元<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7678358558786645489\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#c25a3a;\">漫展汇总</a>", "start": "2026-10-05", "end": "2026-10-05", "badge": "", "multisrc": false, "crowd": "单人/情侣", "tag": "exshow"}, {"id": 9, "title": "白云国际动漫游戏嘉年华", "chip": "漫展", "time": "10/5–6 周一–周二", "desc": "美食、音乐、潮玩、次元狂欢齐聚，白云国际会议中心。。10/1-5每日16:00-21:00免费入场，精酿长廊+粤语金曲+NPC巡游；适合傍晚去，先吃再逛再听歌，地铁白云文化广场站直达。", "meta": "⏱ 2–3h｜📍市区·白云｜👤 单人/情侣/带娃｜🚇 2/12号线白云文化广场站E口｜免费入场<br>🔗 <a href=\"https://m.gz.bendibao.com/tour/372293.html\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#c25a3a;\">本地宝</a>", "start": "2026-10-05", "end": "2026-10-06", "badge": "", "multisrc": true, "crowd": "单人/情侣/带娃", "tag": "exshow"}, {"id": 10, "title": "声幻奇境·巅峰之夜超级音乐盛典", "chip": "演出", "time": "10/1、10/3", "desc": "大学城体育中心大型音乐盛典，国庆夜燃爆现场。。年轻歌手阵容为主，现场氛围热烈；散场地铁4号线会排队，建议预留离场时间。", "meta": "⏱ 2–3h（晚间）｜📍市区·大学城｜👤 单人/情侣｜🚇 4号线大学城北站｜票价以官方为准<br>🔗 <a href=\"https://m.gz.bendibao.com/xiuxian/362287.shtm\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#9c3f6a;\">本地宝</a>", "start": "2026-10-01", "end": "2026-10-03", "badge": "", "multisrc": true, "crowd": "单人/情侣", "tag": "exshow"}, {"id": 11, "title": "汪苏泷「明日世界」巡回演唱会", "chip": "演出", "time": "10/2–4 周五–周日", "desc": "省奥体连开三场，国内体育场最高弧形主结构+70米宽舞台。。音响与灯光配置拉满，看台高位也能看清舞台；10/2-4晚场，白天可顺路逛奥体周边。", "meta": "⏱ 3h（晚间）｜📍市区·奥体｜👤 单人/情侣｜🚇 4/21号线黄村站｜🎫 看台380/580/780元 · 内场980/1280/1680元（学生280元起）<br>🔗 <a href=\"https://m.gz.bendibao.com/xiuxian/362287.shtm\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#9c3f6a;\">本地宝</a>", "start": "2026-10-02", "end": "2026-10-04", "badge": "", "multisrc": true, "crowd": "单人/情侣", "tag": "exshow"}, {"id": 12, "title": "广州大剧院·舞台剧《繁花》第二季", "chip": "演出", "time": "10/30–31 周五–周六", "desc": "现象级沪语舞台剧，国庆后场次可提前订票。10/30-31广州大剧院两场，沪语对白配字幕，老上海风情十足；适合喜欢戏剧和城市文学的，早买票选好位置。", "meta": "⏱ 约3h｜📍市区·珠江新城｜👤 情侣/文艺向｜🚇 3号线/APM大剧院站｜票价以官方为准<br>🔗 <a href=\"https://www.gzdjy.org/index.html\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#9c3f6a;\">大剧院官网</a>", "start": "2026-10-30", "end": "2026-10-31", "badge": "", "multisrc": false, "crowd": "情侣/文艺向", "tag": "exshow"}, {"id": 13, "title": "二沙岛四季音乐会（33场惠民演出）", "chip": "演出", "time": "10/1–7 国庆", "desc": "星海音乐厅策划承办，管风琴声光秀+午后音乐会，近万张惠民票。。10/1-7二沙岛连演33场，惠民票性价比极高需抢；午后场适合带娃，晚间场氛围更佳，均在音乐厅周边露天/室内场地。", "meta": "⏱ 2–3h｜📍市区·二沙岛｜👤 单人/情侣/带娃｜🚇 APM海心沙站｜惠民票低至60元（近万张）<br>🔗 <a href=\"http://m.toutiao.com/group/7689451303352746505/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">南方+</a>", "start": "2026-10-01", "end": "2026-10-07", "badge": "", "multisrc": true, "crowd": "单人/情侣/带娃", "tag": "exshow"}, {"id": 14, "title": "汉斯·季默传奇音乐会（电影原声）", "chip": "演出", "time": "10/3 周六", "desc": "好莱坞配乐大师原声音乐会，震撼视听，国庆夜高端之选。10/3在宝能广州国际体育演艺中心，经典电影配乐交响现场；480-2580元分档，情侣或影迷选中前排体验最佳。", "meta": "⏱ 2–3h｜📍市区·宝能广州国际体育演艺中心｜👤 情侣/影迷｜🚇 6号线萝岗站｜480–2580元<br>🔗 <a href=\"https://m.gz.bendibao.com/tour/344996.html\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">本地宝</a>", "start": "2026-10-03", "end": "2026-10-03", "badge": "", "multisrc": false, "crowd": "情侣/影迷", "tag": "exshow"}, {"id": 15, "title": "广州音乐公园《极SHOW》音乐节", "chip": "演出", "time": "10/1–7 国庆", "desc": "主打粤语流行音乐，广州音乐公园开园音乐节。。国庆档连办多日，新公园场地宽阔；粤语歌爱好者闭眼冲，具体阵容和票价以官方公告为准。", "meta": "⏱ 2–3h（晚间）｜📍市区·广州音乐公园｜👤 情侣/朋友｜🚇 以官方为准｜票价以官方为准<br>🔗 <a href=\"https://www.sina.cn/news/detail/5345948046986821.html\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">新浪</a>", "start": "2026-10-01", "end": "2026-10-07", "badge": "", "multisrc": true, "crowd": "情侣/朋友", "tag": "exshow"}, {"id": 16, "title": "2026广州国际电动车摩托车展", "chip": "展会", "time": "10/10–12 近2周", "desc": "3万㎡、500+展商，整车/电池/充换电全品类，车迷与行业客必逛。10/10-12在空港博览中心，可试驾体验新车；位置近机场，自驾最方便，逛完可顺路吃机场美食圈。", "meta": "⏱ 半天｜📍周边·广州空港博览中心（机场展馆）｜👤 单人/情侣｜🚗 自驾/机场快线｜票价以官方为准<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7688640261430102907\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">展会信息</a>", "start": "2026-10-10", "end": "2026-10-12", "badge": "", "multisrc": false, "crowd": "单人/情侣", "tag": "exshow"}, {"id": 17, "title": "GSF广州采购交易会（保利世贸）", "chip": "展会", "time": "10/14–17 近1个月", "desc": "秋季采购旺季，全球买家云集，逛展顺路逛琶洲商圈。10/14-17保利世贸博览馆举办，适合商贸人士与好奇逛展的人；登记入场，地铁8号线琶洲站直达，看完逛保利广场。", "meta": "⏱ 半天｜📍市区·琶洲保利世贸博览馆｜👤 单人/商务｜🚇 8号线琶洲站｜登记入场<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7688566317130869093\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">展会排期</a>", "start": "2026-10-14", "end": "2026-10-17", "badge": "", "multisrc": false, "crowd": "单人/商务", "tag": "exshow"}, {"id": 18, "title": "第140届广交会（秋季·琶洲）", "chip": "展会", "time": "10/15–11/4 近1个月", "desc": "全球最大贸易盛会，分三期举行，会展之都的年度盛事。第140届广交会10/15-11/4在琶洲举办，专业观众需提前登记；对普通市民，三期各有侧重，看展之余周边餐饮齐全。", "meta": "⏱ 半天–1天｜📍市区·琶洲广交会展馆｜👤 商务/好奇｜🚇 8号线新港东站/琶洲站｜专业登记<br>🔗 <a href=\"https://www.trip.com/events/13938395-2026-guangzhou-collection/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">展会信息</a>", "start": "2026-10-15", "end": "2026-11-04", "badge": "", "multisrc": false, "crowd": "商务/好奇", "tag": "exshow"}, {"id": 19, "title": "《梁祝&花好月圆》中式传世音乐会", "chip": "演出", "time": "10/30 周五", "desc": "广州4+室内乐四重奏，小提琴×中提琴×大提琴×钢琴重新演绎《梁祝》。10/30在正佳大剧院，室内乐编制更细腻动人；适合情侣文艺夜，正佳商圈吃饭+看剧一站式。", "meta": "⏱ 约2h｜📍市区·正佳大剧院｜👤 情侣/文艺｜🚇 1/3号线体育西路站｜票价以官方为准<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7686751899937594761\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">演出信息</a>", "start": "2026-10-30", "end": "2026-10-30", "badge": "", "multisrc": false, "crowd": "情侣/文艺", "tag": "exshow"}, {"id": 20, "title": "广州塔·拾光舞蹈季（三大篇章）", "chip": "演出 · 舞蹈季", "time": "10月 整月", "desc": "红色年代、地标爵士、未来舞蹈秀三大篇章轮番上演，覆盖广州塔广场、海洋馆、岭南印象园。。从国庆延伸到整个十月，每晚不同主题；适合傍晚登塔+看演出一条线，机器狗与智能舞蹈机器人是未来篇的亮点。", "meta": "⏱ 2–3h｜📍市区·广州塔片区｜👤 单人/情侣/带娃｜🚇 3号线/APM广州塔站｜部分场次免费<br>🔗 <a href=\"http://m.toutiao.com/group/7687980798104060426/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">广州日报</a>", "start": "2026-10-01", "end": "2026-10-31", "badge": "", "multisrc": true, "crowd": "单人/情侣/带娃", "tag": "exshow"}, {"id": 21, "title": "广州文化公园国庆文艺汇演+公益电影", "chip": "演出 · 惠民", "time": "9/26–10/7", "desc": "歌舞表演、粤剧专场、公益电影轮番上，老城区免费看大戏。。每晚不同节目，下午场适合带长辈，晚间公益电影可免费观影；文化公园地铁直达，逛完顺路吃西关美食。", "meta": "⏱ 2h｜📍市区·荔湾文化公园｜👤 带娃/长辈｜🚇 6号线文化公园站D口｜免费<br>🔗 <a href=\"https://m.gz.bendibao.com/tour/353918.html\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">本地宝</a>", "start": "2026-09-26", "end": "2026-10-07", "badge": "", "multisrc": true, "crowd": "带娃/长辈", "tag": "exshow"}, {"id": 22, "title": "中文说唱派对·广州站（MAO太古仓）", "chip": "演出 · Live", "time": "10/1 周四", "desc": "国庆夜说唱拼盘，单人128元、VIP278元（含合影签售）。。现场氛围炸裂，太古仓码头江景配演出；适合喜欢hiphop的年轻人，VIP场次提前排队能站前排。", "meta": "⏱ 3h（晚间）｜📍市区·MAO Livehouse太古仓店｜👤 单人/朋友｜🚇 8号线凤凰新村站转车｜128–278元<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7689744251480220603\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">演出信息</a>", "start": "2026-10-01", "end": "2026-10-01", "badge": "", "multisrc": true, "crowd": "单人/朋友", "tag": "exshow"}, {"id": 23, "title": "特雷西《地下情书》巡演（声音共和）", "chip": "演出 · Live", "time": "10/2 周五", "desc": "独立音乐人巡演广州站，168元起，声音共和广州塔店。。小场Live氛围更亲密，广州塔下听完可散步江边夜景；票务平台在售，Livehouse站位先到先得。", "meta": "⏱ 2.5h（晚间）｜📍市区·声音共和Livehouse（广州塔店）｜👤 单人/朋友｜🚇 3号线广州塔站｜168元起<br>🔗 <a href=\"https://www.showstart.com/event/list?cityCode=20\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">秀动</a>", "start": "2026-10-02", "end": "2026-10-02", "badge": "", "multisrc": true, "crowd": "单人/朋友", "tag": "exshow"}, {"id": 24, "title": "广州首届超级汉堡节（小红书热门）", "chip": "市集 · 新", "time": "10/1–7 国庆", "desc": "国庆期间各大汉堡品牌齐聚一堂，肉食爱好者一站式吃到爽。具体场地与档期以官方公布为准，出发前刷小红书确认；中午错峰去，一次尝遍招牌款，热量拉满但快乐加倍。", "meta": "⏱ 半天｜📍 地点待官方公布，出发前查小红书实时笔记｜👤 情侣/朋友/带娃<br>🔗 <a href=\"https://www.xiaohongshu.com/search_result?keyword=%E5%B9%BF%E5%B7%9E%E9%A6%96%E5%B1%8A%E8%B6%85%E7%BA%A7%E6%B1%89%E5%A0%A1%E8%8A%82\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">小红书笔记</a>", "start": "2026-10-01", "end": "2026-10-07", "badge": "", "multisrc": false, "crowd": "情侣/朋友/带娃<br>🔗 <a href=\"https://www.xiaohongshu.com/search_result?keyword=%E5%B9%BF%E5%B7%9E%E9%A6%96%E5%B1%8A%E8%B6%85%E7%BA%A7%E6%B1%89%E5%A0%A1%E8%8A%82\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">小红书笔记</a>", "tag": "marketfood"}, {"id": 25, "title": "白鹅潭万象城（广州首座万象城）", "chip": "新地标", "time": "9/30 开业", "desc": "9/30盛大启幕，超300家品牌、六成首店旗舰店，冰雪滑冰场+IMAX影城。。广州首座万象城，白鹅潭江边位置好拍；新开第一周人流集中，建议傍晚后去，滑冰场和IMAX记得提前订。", "meta": "⏱ 半天–1天｜📍市区·荔湾白鹅潭｜👤 单人/情侣/带娃｜🚇 1号线芳村站<br>🔗 <a href=\"https://www.nfnews.com/content/5yppDGG4yp.html\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">南方+</a>", "start": "2026-09-30", "end": "2099-12-31", "badge": "本周主推", "multisrc": true, "crowd": "单人/情侣/带娃", "tag": "marketfood"}, {"id": 26, "title": "白云国际啤酒美食嘉年华", "chip": "市集 · 美食", "time": "10/1–5 周四–周一", "desc": "16:00–21:00，啤酒+美食+音乐+娱乐，白云山下城央微度假。。超百个品牌摊位+十多个乐队轮番登场，免费入场；16点开园就进场最舒服，落日时段氛围最好。", "meta": "⏱ 2–3h（傍晚）｜📍市区·白云｜👤 情侣/带娃｜🚇 2/12号线白云文化广场站E口｜免费入场<br>🔗 <a href=\"https://m.gz.bendibao.com/tour/372294.html\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">本地宝</a>", "start": "2026-10-01", "end": "2026-10-05", "badge": "", "multisrc": true, "crowd": "情侣/带娃", "tag": "marketfood"}, {"id": 27, "title": "大湾区滨海啤酒嘉年华（南沙）", "chip": "市集 · 音乐", "time": "10/1–6 周四–周二", "desc": "白鲸乐队等连嗨6天，滨海live氛围拉满，免票观赏。。南沙滨海公园10/1-6，大湾区滨海啤酒嘉年华免票，白天玩海晚上听歌；地铁4号线南横站转接驳，建议自驾或打车。", "meta": "⏱ 2–3h｜📍南沙（车程约1h）｜👤 情侣/朋友｜🚇 4号线+接驳 / 自驾｜免票<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7689775237189319539\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">活动信息</a>", "start": "2026-10-01", "end": "2026-10-06", "badge": "", "multisrc": true, "crowd": "情侣/朋友", "tag": "marketfood"}, {"id": 28, "title": "粤海天地面包生活节（小红书热门）", "chip": "市集 · 面包", "time": "10/1–5 国庆", "desc": "排队王阵容官宣，面包脑袋的天堂，国庆限定烘焙市集。全国知名烘焙品牌集中亮相，碱水、贝果、可颂一次集齐；上午开市就冲人最少，热门款卖完即止。", "meta": "⏱ 2–3h｜📍 地点待官方公布，出发前查小红书实时笔记｜👤 单人/情侣/带娃｜免票<br>🔗 <a href=\"https://www.xiaohongshu.com/search_result?keyword=%E7%B2%A4%E6%B5%B7%E5%A4%A9%E5%9C%B0%E9%9D%A2%E5%8C%85%E7%94%9F%E6%B4%BB%E8%8A%82\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">小红书笔记</a>", "start": "2026-10-01", "end": "2026-10-05", "badge": "", "multisrc": false, "crowd": "单人/情侣/带娃", "tag": "marketfood"}, {"id": 29, "title": "珠江公园·草地音乐会（国庆专场）", "chip": "市集 · 演出", "time": "10/4 周日", "desc": "音乐盛宴+诗词朗诵，草地野餐听现场，传统与现代交织。麓湖生态城水岸生活节期间举办，适合带野餐垫席地而坐；白天园内可看展逛市集，晚间音乐会压轴。", "meta": "⏱ 2–3h（下午）｜📍市区·天河｜👤 单人/情侣/带娃｜🚇 5号线潭村站｜免费<br>🔗 <a href=\"http://gz.bendibao.com/tour/2026921/ly372409.shtml\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">本地宝</a>", "start": "2026-10-04", "end": "2026-10-04", "badge": "", "multisrc": false, "crowd": "单人/情侣/带娃", "tag": "marketfood"}, {"id": 30, "title": "正佳广场·CICF主题痛楼+动漫快闪", "chip": "市集 · 动漫", "time": "10/1–7 国庆", "desc": "Cissy和Alpha主题打卡点、IP痛楼、文豪野犬快闪。。年轻人为主的动漫市集，摊位内容多元；适合结伴逛，打卡点出片率高，记得带好相机。", "meta": "⏱ 2–3h｜📍市区·天河｜👤 单人/情侣/带娃｜🚇 1/3号线体育西路站｜免费（消费自费）<br>🔗 <a href=\"https://roll.sohu.com/a/1079498369_492199\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">CICF联动</a>", "start": "2026-10-01", "end": "2026-10-07", "badge": "", "multisrc": true, "crowd": "单人/情侣/带娃", "tag": "marketfood"}, {"id": 31, "title": "艺博院五楼露台生活艺术市集", "chip": "市集 · 展览", "time": "10/1–6 周四–周二", "desc": "看展顺路逛市集，手作、文创、轻食一应俱全。在艺博院内，看完「城脉千年」展顺势逛摊；手作摊和文创小店适合挑小礼物，轻食区可解决午饭。", "meta": "⏱ 1–2h｜📍市区·海珠｜👤 单人/情侣/带娃｜🚇 12号线赤岗塔站B口｜免费<br>🔗 <a href=\"https://wx.gzam.com.cn/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">艺博院官网</a>", "start": "2026-10-01", "end": "2026-10-06", "badge": "", "multisrc": false, "crowd": "单人/情侣/带娃", "tag": "marketfood"}, {"id": 32, "title": "2026广州精品美食周（海心沙）", "chip": "美食 · 重磅", "time": "10/10–19 近2周", "desc": "\"食在广州\"年度重磅IP，顶流美食齐聚海心沙，联动第140届广交会。。10/10-19连办十天，官方定档信息已出；免费入场、餐饮自费，海心沙傍晚景色一流，建议避开周末高峰。", "meta": "⏱ 半天–1天｜📍市区·海心沙｜👤 情侣/朋友/带娃｜🚇 APM海心沙站｜免费入场（消费自费）<br>🔗 <a href=\"https://www.gz.gov.cn/ysgz/xwdt/ysdt/content/post_10829136.html\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">广州市政府</a>", "start": "2026-10-10", "end": "2026-10-19", "badge": "", "multisrc": true, "crowd": "情侣/朋友/带娃", "tag": "marketfood"}, {"id": 33, "title": "\"因为有你·鎏金时光\"白云湖畔音乐会", "chip": "市集 · 音乐", "time": "10/6 周二", "desc": "国庆尾声的湖畔音乐之夜，白云湖上乐声与晚风交融。10/6晚在白云湖畔，免费观赏；湖边风大记得带件外套，地铁8号线白云湖站直达，散场夜跑返程注意安全。", "meta": "⏱ 2–3h（晚间）｜📍市区·白云湖｜👤 情侣/朋友｜🚇 8号线白云湖站｜免费<br>🔗 <a href=\"http://m.toutiao.com/group/7689376880818766377/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">羊城晚报</a>", "start": "2026-10-06", "end": "2026-10-06", "badge": "", "multisrc": false, "crowd": "情侣/朋友", "tag": "marketfood"}, {"id": 34, "title": "白云万象汇首届面包节「云有好市」", "chip": "市集 · 面包", "time": "10/1–7 国庆", "desc": "20城50+优质烘焙品牌，面包甜品风味小食咖啡饮品应有尽有。白云万象汇首届面包节，商场室内不怕晒；逛吃之后顺路逛街，适合全家人一起的轻快行程。", "meta": "⏱ 2–3h｜📍市区·白云万象汇｜👤 单人/情侣/带娃｜🚇 2号线白云文化广场站｜免费入场<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7687887797813841152\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">市集汇总</a>", "start": "2026-10-01", "end": "2026-10-07", "badge": "", "multisrc": false, "crowd": "单人/情侣/带娃", "tag": "marketfood"}, {"id": 35, "title": "西华路美食街（老广烟火气）", "chip": "美食", "time": "随时可去", "desc": "珍珍小食店牛腩啫啫肠粉、三和美食平价猪肠粉等老店扎堆。。西华路是老广宵夜圣地，人均30-60元就能吃饱；建议下午4点后去，排队高峰在饭点，边走边吃最过瘾。", "meta": "⏱ 2–3h｜📍市区·越秀｜👤 单人/情侣/带娃｜🚇 8号线彩虹桥站A口｜人均30–60元<br>🔗 <a href=\"https://www.xiaohongshu.com/search_result?keyword=%E5%B9%BF%E5%B7%9E%E8%A5%BF%E5%8D%8E%E8%B7%AF%E7%BE%8E%E9%A3%9F%E8%A1%97\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">小红书攻略</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": true, "crowd": "单人/情侣/带娃", "tag": "marketfood"}, {"id": 36, "title": "腾元生煎（天河城对面新店）", "chip": "美食", "time": "随时可去", "desc": "西华路排队王开进天河城，生煎包一咬爆汁，配红豆沙绝配。天河城对面新店交通方便，逛街顺路吃；饭点排队较长，错峰更省时，招牌生煎趁热吃。", "meta": "⏱ 1h｜📍市区·天河｜👤 单人/情侣｜🚇 1/3号线体育西站B口｜人均约25元<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7686141119759681147\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">探店视频</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": false, "crowd": "单人/情侣", "tag": "marketfood"}, {"id": 37, "title": "客村·泰美丽泰式大排档", "chip": "美食", "time": "随时可去", "desc": "客村宝藏平价泰餐，氛围超好很出片，招牌菜闭眼点都好吃。小红书口碑店，人均友好；建议提前到店取号，泰式奶茶和冬阴功是标配，拍照记得选靠窗位。", "meta": "⏱ 1–2h｜📍市区·客村｜👤 单人/情侣｜🚇 3/8号线客村站｜人均60+<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7672649587392435035\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">攻略</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": false, "crowd": "单人/情侣", "tag": "marketfood"}, {"id": 38, "title": "陈添记·祖传爽鱼皮（宝华路）", "chip": "老字号", "time": "随时可去", "desc": "老广从小吃到大的捞鱼皮，爽脆弹牙配酸辣汁，一份不过瘾。。西关宝华路老店，人均40元上下；鱼皮+艇仔粥是标配，午后去人少，逛完上下九顺路吃。", "meta": "⏱ 1h｜📍市区·荔湾宝华路｜👤 单人/情侣/带娃｜🚇 1号线长寿路站｜人均30–50元<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7670168887594069937\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">老字号清单</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": true, "crowd": "单人/情侣/带娃", "tag": "marketfood"}, {"id": 39, "title": "陶陶居（1880年百年茶楼）", "chip": "老字号", "time": "随时可去", "desc": "百年粤式茶楼，虾饺、烧卖、凤爪经典味，环境雅致有岭南风情。。第十甫路总店最有氛围，北京路天河城也有分店；早茶时段要等位，人均80-120元，游客本地人都爱。", "meta": "⏱ 1.5–2h｜📍市区·荔湾/越秀｜👤 情侣/带娃/长辈｜🚇 1号线长寿路站/公园前站｜人均80–120元<br>🔗 <a href=\"https://sg.trip.com/moments/theme/poi-beijing-road-128526211-restaurant-993134/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">攻略</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": true, "crowd": "情侣/带娃/长辈", "tag": "marketfood"}, {"id": 40, "title": "超记煲仔饭（陈家祠老店）", "chip": "老字号", "time": "随时可去", "desc": "广州老字号煲仔饭，腊味饭锅巴香脆，食神级平民美味。。陈家祠店近地铁，人均40元；饭点排队较久，错峰下午两点去最稳，吃完顺路逛陈家祠。", "meta": "⏱ 1h｜📍市区·陈家祠｜👤 单人/情侣/带娃｜🚇 1号线陈家祠站｜人均30–50元<br>🔗 <a href=\"https://in.trip.com/restaurant/china/guangzhou/detail/chao-ji-bao-zai-fan-114749162/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">美食页</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": true, "crowd": "单人/情侣/带娃", "tag": "marketfood"}, {"id": 41, "title": "广记鲍鱼烧鹅农庄（从化温泉镇）", "chip": "美食 · 非遗", "time": "随时可去", "desc": "荔枝柴火瓦缸烧鹅非遗传承，烧鹅+鲍鱼鲜醇爆汁，泡温泉后必吃。。入选从化非遗名录，柴火老火汤+黄鳝鹧鸪大锅饭地道；适合去从化泡温泉的行程，人均80-120元。", "meta": "⏱ 1.5–2h｜📍周边·从化温泉镇（车程约1.5h）｜👤 情侣/带娃｜🚗 自驾为主｜人均80–120元<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7648878053359209769\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#b07a2a;\">探店视频</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": true, "crowd": "情侣/带娃", "tag": "marketfood"}, {"id": 42, "title": "帽峰山森林公园（红枫全盛）", "chip": "户外", "time": "红枫全盛", "desc": "广州第二高峰、近郊赏枫秘境，三千余株鸡爪槭全盛观赏期。。红枫10-12月全盛，门票10元性价比高；上午光线最好，山路平缓带娃无压力，备好水和外套。", "meta": "⏱ 3–4h｜📍周边·白云太和（车程约1h）｜👤 单人/情侣/带娃｜🚇 14号线太和站转公交｜门票10元<br>🔗 <a href=\"https://huacheng.gz-cmc.com/pages/2026/09/15/05f71ebffd1b4575853a0149aead5897.html\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">广州日报</a>", "start": "2026-09-01", "end": "2026-12-31", "badge": "本周主推", "multisrc": true, "crowd": "单人/情侣/带娃", "tag": "natureancient"}, {"id": 43, "title": "广州国际生物岛（环岛骑行）", "chip": "户外", "time": "随时可去", "desc": "珠江环绕江心岛，6.6公里环岛绿道骑行轻跑，国庆人少车少。生物岛全岛免费，骑行1-2小时可环岛；岛上绿化好、江景开阔，适合亲子骑行或情侣散步，地铁4号线官洲站直达。", "meta": "⏱ 2–3h｜📍市区·海珠/番禺｜👤 单人/情侣/带娃｜🚇 4号线官洲站｜免费<br>🔗 <a href=\"https://you.ctrip.com/sight/guangzhou152/1481842.html\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">携程</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": false, "crowd": "单人/情侣/带娃", "tag": "natureancient"}, {"id": 44, "title": "南沙20公里\"情侣路\"滨海慢行道", "chip": "户外", "time": "随时可去", "desc": "广州版\"漫画海岸线\"，20公里滨海绿道骑行漫步，傍晚看海上落日。南沙滨海绿道视野开阔，沿途草坪适合野餐；傍晚5-6点落日最佳，地铁4号线南横站转共享单车即可开骑。", "meta": "⏱ 2–3h｜📍南沙（车程约1h）｜👤 情侣/带娃｜🚇 4号线广隆站/大涌站｜免费<br>🔗 <a href=\"https://static.nfnews.com/content/202509/29/c11775127.html\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">南方+</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": false, "crowd": "情侣/带娃", "tag": "natureancient"}, {"id": 45, "title": "海珠小众citywalk（小红书宝藏路线）", "chip": "户外 · 宝藏", "time": "随时可去", "desc": "中山大学南校区→纯阳观→晓港公园→十香园，人少治愈不花钱逛一整天。。全程免费，小红书高赞citywalk路线；中大需小程序预约（除周一开放），全程4-5小时，节奏慢适合独行或两人慢慢逛。", "meta": "⏱ 1天｜📍市区·海珠｜👤 单人/情侣｜🚇 8号线中大站A口｜免费<br>🔗 <a href=\"https://www.xiaohongshu.com/explore/6a7008920000000005032bc5\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">小红书笔记</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": true, "crowd": "单人/情侣", "tag": "natureancient"}, {"id": 46, "title": "清远连山·欧家梯田", "chip": "户外", "time": "稻田金黄季", "desc": "广东最大原生态梯田，国庆正值稻田金黄，住民宿门票半价。欧家梯田国庆期间金黄稻田最出片，住景区民宿可享半价门票；适合两天一夜，自驾约3小时，山路慢开注意安全。", "meta": "⏱ 1–2天｜📍周边·清远（车程3–3.5h）｜👤 情侣/带娃｜🚗 自驾为主｜门票约60–68元<br>🔗 <a href=\"https://m.ctrip.com/webapp/you/community/detail?articleId=369927881&hidePublishButton=true&hideTitle=true&allianceid=7144873&sid=263483165\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">携程</a>", "start": "2026-09-01", "end": "2026-10-20", "badge": "", "multisrc": false, "crowd": "情侣/带娃", "tag": "natureancient"}, {"id": 47, "title": "从化·桂峰村柿子季（百年柿林）", "chip": "户外 · 秋日", "time": "10月下旬 柿子季", "desc": "十月下旬百年柿林橙红挂满枝头，配乡村老屋，岭南秋日氛围感拉满。桂峰村柿子季10月下旬进入盛期，下午3-5点逆光拍摄最通透；切记只拍不摘，村内可买农户现摘柿子。", "meta": "⏱ 半天–1天｜📍周边·从化吕田（车程约2h）｜👤 情侣/带娃/摄影｜🚗 自驾为主｜免费<br>🔗 <a href=\"https://m.ctrip.com/webapp/you/community/detail?articleId=370862689&hidePublishButton=true&hideTitle=true&allianceid=7144873&sid=263483165\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">携程笔记</a>", "start": "2026-10-01", "end": "2026-11-15", "badge": "", "multisrc": false, "crowd": "情侣/带娃/摄影", "tag": "natureancient"}, {"id": 48, "title": "增城古榄园环线徒步（绿野仙踪）", "chip": "户外 · 徒步", "time": "10月 黄金季", "desc": "5.6公里环线，古榄树群+小河流水+山间瀑布，2–3小时轻松走完。增城古榄园环线爬升仅150米，徒步新手友好；起点导航邓山村，全程约3小时，带水即可，秋日体感舒适。", "meta": "⏱ 2–3h｜📍周边·增城邓山村（车程约1h）｜👤 单人/情侣/朋友｜🚗 自驾｜免费<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7683487270460017960\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">徒步攻略</a>", "start": "2026-10-01", "end": "2026-10-31", "badge": "", "multisrc": false, "crowd": "单人/情侣/朋友", "tag": "natureancient"}, {"id": 49, "title": "增城白水寨", "chip": "户外", "time": "随时可去", "desc": "428米落差大瀑布、天南第一梯9999级台阶，天然氧吧吸氧徒步。白水寨空气极好，门票60元；体力一般可只走到1499级观瀑台，全程登顶需4-5小时，记得穿防滑鞋。", "meta": "⏱ 3–4h｜📍周边·增城（车程1.5h）｜👤 情侣/带娃｜🚗 自驾 / 21号线增城广场站转公交｜门票60元<br>🔗 <a href=\"https://m.ctrip.com/webapp/you/community/detail?articleId=371483967&hidePublishButton=true&hideTitle=true&allianceid=7144873&sid=263483165\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">携程</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": false, "crowd": "情侣/带娃", "tag": "natureancient"}, {"id": 50, "title": "从化·溪头村（广东小丽江）", "chip": "户外 · 古村", "time": "随时可去", "desc": "隐于竹林溪谷的村落，徒步玩水、品农家菜，人少清静。从化溪头村是\"广东小丽江\"，村口溪水适合玩水纳凉；农家菜以走地鸡和山货出名，住一晚体验更完整。", "meta": "⏱ 半天–1天｜📍周边·从化（车程1.5h）｜👤 情侣/带娃｜🚗 自驾｜免费<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7603705627797474602\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">攻略</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": false, "crowd": "情侣/带娃", "tag": "natureancient"}, {"id": 51, "title": "沙湾古镇（800年岭南古镇）", "chip": "古街", "time": "随时可去", "desc": "镬耳老屋、蚝壳古墙，正宗非遗姜撞奶，街巷全部免费逛。沙湾古镇800年历史，主街店铺可免费参观；姜埋奶、鱼皮角是必吃，下午去逛到傍晚最舒服。", "meta": "⏱ 半天｜📍周边·番禺（车程约40min）｜👤 单人/情侣/带娃｜🚇 3号线市桥站转番67｜街巷免费<br>🔗 <a href=\"https://m.ctrip.com/webapp/you/community/detail?articleId=374581467&hidePublishButton=true&hideTitle=true&allianceid=7144873&sid=263483165\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#5F7A8C;\">携程</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": false, "crowd": "单人/情侣/带娃", "tag": "natureancient"}, {"id": 52, "title": "小洲村（\"南有瀛洲\"）", "chip": "古街", "time": "随时可去", "desc": "500余年岭南水乡，文艺小店、茶室书吧林立，安静发呆好去处。小洲村艺术氛围浓，咖啡馆和手作店散落巷中；适合一人闲逛或情侣慢游，周末下午最惬意。", "meta": "⏱ 2–3h｜📍周边·海珠（车程约30min）｜👤 单人/情侣｜🚇 4号线/公交｜免费<br>🔗 <a href=\"https://m.gz.bendibao.com/jingdian/xiaozhoucun/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#5F7A8C;\">本地宝</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": false, "crowd": "单人/情侣", "tag": "natureancient"}, {"id": 53, "title": "黄埔古港（千年古村）", "chip": "古街", "time": "随时可去", "desc": "见证广州海丝繁荣的千年古村，祠堂家塾古迹密集。黄埔村保留大量清代建筑，免费开放；适合历史爱好者慢慢逛，顺路到黄埔古港看江景，半天刚好。", "meta": "⏱ 2h｜📍市区·海珠琶洲｜👤 单人/情侣/带娃｜🚇 4/8号线万胜围站B口｜免费<br>🔗 <a href=\"https://www.xiaohongshu.com/search_result?keyword=%E9%BB%84%E5%9F%94%E5%8F%A4%E6%B8%AF\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#5F7A8C;\">小红书</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": false, "crowd": "单人/情侣/带娃", "tag": "natureancient"}, {"id": 54, "title": "增城·正果老街（畲族风情）", "chip": "古街 · 美食", "time": "随时可去", "desc": "百年畲族风情古街，红灯笼挂满街巷、国庆氛围拉满，逛吃一站式。正果老街以云吞、蛋散等小吃出名；国庆期间灯笼装饰拍照出片，适合半日逛吃，自驾最方便。", "meta": "⏱ 2–3h｜📍周边·增城（车程1.2h）｜👤 情侣/带娃｜🚗 自驾 / 21号线转公交｜免费<br>🔗 <a href=\"https://m.ctrip.com/webapp/you/community/detail?articleId=375644711&hidePublishButton=true&hideTitle=true&allianceid=7144873&sid=263483165\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#5F7A8C;\">携程</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": false, "crowd": "情侣/带娃", "tag": "natureancient"}, {"id": 55, "title": "顺德逢简水乡", "chip": "古街 · 美食", "time": "随时可去", "desc": "岭南水乡+美食天堂，游船穿行古桥水道，0元出片，顺路吃双皮奶。逢简水乡在佛山顺德，街巷免费逛；摇橹船另付费体验，双皮奶和鱼饼必尝，适合家庭一日游。", "meta": "⏱ 半天｜📍周边·佛山（车程约1h）｜👤 情侣/带娃｜🚗 自驾 / 广佛线魁奇路站｜免费<br>🔗 <a href=\"https://m.ctrip.com/webapp/you/community/detail?articleId=257957925&hidePublishButton=true&hideTitle=true&allianceid=7144873&sid=263483165\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#5F7A8C;\">携程</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": false, "crowd": "情侣/带娃", "tag": "natureancient"}, {"id": 56, "title": "增城瓜岭村（广州唯一水上碉楼）", "chip": "古村 · 水乡", "time": "随时可去", "desc": "500余年岭南水乡古村，广州唯一水上碉楼，麻石巷+碉楼+西式洋楼交错。。国家AAA景区，华侨文化深厚；村口有免费停车场，午后光线适合拍碉楼倒影，半天刚好。", "meta": "⏱ 2–3h｜📍周边·增城新塘（车程约1h）｜👤 情侣/摄影/带娃｜🚗 自驾为主｜免费<br>🔗 <a href=\"https://www.nfnews.com/content/xovK4ve1yJ.html\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#5F7A8C;\">南方+</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": true, "crowd": "情侣/摄影/带娃", "tag": "natureancient"}, {"id": 57, "title": "花都港头古村（600年原生态）", "chip": "古村 · 0门票", "time": "随时可去", "desc": "六百年岭南原生态古村，零门票、没商业化，古建+咖啡+民宿齐全。。文孙曾公祠是明代三进式建筑，砖雕精致；半日闲逛或两天一夜都合适，村委会可免费停车。", "meta": "⏱ 半天–1天｜📍周边·花都（车程约1h）｜👤 情侣/带娃/独行｜🚗 自驾为主｜免费<br>🔗 <a href=\"https://m.ctrip.com/webapp/you/community/detail?articleId=367204405&hidePublishButton=true&hideTitle=true&allianceid=7144873&sid=263483165\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#5F7A8C;\">携程</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": true, "crowd": "情侣/带娃/独行", "tag": "natureancient"}, {"id": 58, "title": "黄埔莲塘古村（700年荷花古村）", "chip": "古村 · 出片", "time": "随时可去", "desc": "700多年岭南古村，古巷+荷塘+古祠，小红书冷门出片地。。地铁14号线何棠下站转车10分钟可达；荷塘边拍照最出片，傍晚光线温柔，适合半日放空。", "meta": "⏱ 2–3h｜📍市区外·黄埔九佛（地铁+打车）｜👤 情侣/摄影｜🚇 14号线知识城支线何棠下站｜免费<br>🔗 <a href=\"https://my.trip.com/moments/detail/guangzhou-152-143319331\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#5F7A8C;\">攻略</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": true, "crowd": "情侣/摄影", "tag": "natureancient"}, {"id": 59, "title": "《欢迎来龙餐馆》（延至10/12）", "chip": "在映", "time": "豆瓣 8.7", "desc": "文牧野执导、沈腾蒋奇明主演，美食+反战，票房破22亿口碑王。。豆瓣8.7分，档期延长至10/12，还没看的朋友趁假期补上；排片用猫眼查，选杜比厅体验更佳。", "meta": "⏱ 约2h｜📍各大影院｜👤 情侣/家庭｜<a href=\"https://i.maoyan.com/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">猫眼查排片</a><br>🔗 <a href=\"https://ent.china.com/movie/newszh/11005281/20260824/49696223.html\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">中华网</a>", "start": "2026-08-11", "end": "2026-10-12", "badge": "本周主推", "multisrc": true, "crowd": "情侣/家庭", "tag": "moviebook"}, {"id": 60, "title": "《八仙！》（国产动画口碑黑马）", "chip": "在映", "time": "豆瓣 8.2", "desc": "凡人成团笑闯仙关，猫眼9.7淘票票9.6，暑期长尾仍在映。国产动画口碑爆款，豆瓣8.2；国庆场次仍有排片，适合全家或朋友一起看，笑点密集老少皆宜。", "meta": "⏱ 约2h｜📍各大影院｜👤 带娃/家庭｜<a href=\"https://i.maoyan.com/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">猫眼查排片</a><br>🔗 <a href=\"https://www.sina.cn/media/8472635105\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">电影八仙微博</a>", "start": "2026-07-18", "end": "2026-10-31", "badge": "", "multisrc": false, "crowd": "带娃/家庭", "tag": "moviebook"}, {"id": 61, "title": "《复仇者联盟4：终局之战（加码臻享版）》", "chip": "重映", "time": "观众评分9.0", "desc": "9/25重映即拿中秋档票房冠军，漫威十年收官大银幕重温。复联4「加码臻享版」含新片段，猫眼购票评分9.8；粉丝情怀场值得冲，非粉丝可跳过，IMAX场效果最震撼。", "meta": "⏱ 约3h｜📍各大影院｜👤 单人/情侣｜<a href=\"https://i.maoyan.com/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">猫眼查排片</a><br>🔗 <a href=\"https://ent.ifeng.com/c/8wmoGmncHJ8?ch=ttsearch\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">凤凰网</a>", "start": "2026-09-25", "end": "2026-10-20", "badge": "", "multisrc": false, "crowd": "单人/情侣", "tag": "moviebook"}, {"id": 62, "title": "《震耳欲聋》（延至12/7）", "chip": "在映", "time": "豆瓣 7.6", "desc": "檀健次主演，国庆档口碑佳作，猫眼/淘票票双平台9.6分。震耳欲聋档期延长至12/7，悬疑+情感向；主演演技在线，适合喜欢剧情片的观众，晚场人少安静。", "meta": "⏱ 约2h｜📍各大影院｜👤 单人/情侣｜<a href=\"https://i.maoyan.com/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">猫眼查排片</a><br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7683393492887224817\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">口碑信息</a>", "start": "2026-08-01", "end": "2026-12-07", "badge": "", "multisrc": false, "crowd": "单人/情侣", "tag": "moviebook"}, {"id": 63, "title": "《空枪》（热映中）", "chip": "在映", "time": "豆瓣 7.2", "desc": "犯罪类型片，口碑持续走高，微博大V开分100%。《空枪》豆瓣7.2、猫眼9.1，节奏紧凑反转多；适合推理爱好者，建议不要被剧透，影院选小厅效果更聚气。", "meta": "⏱ 约2h｜📍各大影院｜👤 单人/情侣｜<a href=\"https://i.maoyan.com/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">猫眼查排片</a><br>🔗 <a href=\"https://ent.china.com/movie/newszh/11005281/20260824/49696223.html\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">中华网</a>", "start": "2026-08-01", "end": "2026-12-31", "badge": "", "multisrc": false, "crowd": "单人/情侣", "tag": "moviebook"}, {"id": 64, "title": "《野兽之心》（9/30上映）", "chip": "新映", "time": "9/30 上映", "desc": "布拉德·皮特+人犬荒野求生，超前观影口碑不错，预售已开。9/30上映，动物与人的羁绊+求生题材；适合带家人观影，影院音效对观影体验影响大，选好厅。", "meta": "⏱ 约2h｜📍各大影院｜👤 单人/情侣｜<a href=\"https://i.maoyan.com/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">猫眼查排片</a><br>🔗 <a href=\"https://ent.ifeng.com/c/8wmoB7A1J8b?ch=ttsearch\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">凤凰网</a>", "start": "2026-09-30", "end": "2026-10-31", "badge": "", "multisrc": false, "crowd": "单人/情侣", "tag": "moviebook"}, {"id": 65, "title": "《神探之痕迹》（10/1）", "chip": "国庆新片", "time": "10/1 上映", "desc": "陈思诚执导、张译马丽领衔刑侦大片，\"想看\"人数档期第一。国庆档强片，刑侦悬疑类型；票务平台热度高，建议提前购票锁定场次，影院选黄金时间。", "meta": "⏱ 140分钟｜📍各大影院｜👤 单人/情侣｜<a href=\"https://i.maoyan.com/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">猫眼查排片</a><br>🔗 <a href=\"https://www.jfdaily.com/news/detail?id=1182020\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">上观新闻</a>", "start": "2026-10-01", "end": "2026-10-31", "badge": "", "multisrc": false, "crowd": "单人/情侣", "tag": "moviebook"}, {"id": 66, "title": "《活色生香》（10/1）", "chip": "国庆新片", "time": "10/1 上映", "desc": "闫妮、叶童、倪虹洁主演，聚焦中老年婚恋与女性二次人生，温暖治愈。喜剧外壳下的现实题材，口碑发酵中；适合带父母一起看，笑中带泪的类型。", "meta": "⏱ 约2h｜📍各大影院｜👤 情侣/带父母｜<a href=\"https://i.maoyan.com/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">猫眼查排片</a><br>🔗 <a href=\"https://politics.gmw.cn/2026-09/26/content_39021104.htm\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">光明网</a>", "start": "2026-10-01", "end": "2026-10-31", "badge": "", "multisrc": false, "crowd": "情侣/带父母", "tag": "moviebook"}, {"id": 67, "title": "《小猪佩奇·完美假期》（10/1）", "chip": "国庆新片", "time": "10/1 上映", "desc": "动画合家欢，佩奇和朋友们开启完美假期，亲子必看。10/1上映，低龄友好时长适中；带3-8岁娃首选，影院选白天场，孩子精神最好。", "meta": "⏱ 约1.5h｜📍各大影院｜👤 带娃首选｜<a href=\"https://i.maoyan.com/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">猫眼查排片</a>", "start": "2026-10-01", "end": "2026-10-31", "badge": "", "multisrc": false, "crowd": "带娃首选", "tag": "moviebook"}, {"id": 68, "title": "《落在我身上的雨》陆庆屹", "chip": "读书", "time": "豆瓣 9.2", "desc": "《四个春天》后全新散文集，文字版的生活诗意，写尽成长离别与爱。陆庆屹《落在我身上的雨》豆瓣9.2，散文温柔治愈；适合睡前读，读完后想去贵州走走。", "meta": "💰 59元｜新星出版社·2026年8月<br>🔗 <a href=\"https://book.douban.com/subject/38461487/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#5F7A8C;\">豆瓣条目</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": false, "crowd": "", "tag": "moviebook"}, {"id": 69, "title": "《凡人琐事：我的回忆》章开沅", "chip": "读书", "time": "豆瓣 9.1", "desc": "三代女性血脉羁绊写进骨子里的回忆录，2026上半年豆瓣高分书单常客。章开沅《凡人琐事》豆瓣9.1，历史学者家族叙事；喜欢口述史和家族记忆的读者会沉浸其中。", "meta": "💰 定价以平台为准<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7659796411970891428\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#5F7A8C;\">高分书单</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": false, "crowd": "", "tag": "moviebook"}, {"id": 70, "title": "《螃蟹的邀请》", "chip": "读书", "time": "豆瓣 8.7", "desc": "2026豆瓣热门图书榜高分作，悬疑/文学向口碑之作。《螃蟹的邀请》豆瓣8.7，节奏紧张反转出色；适合地铁通勤或周末一口气读完，推理迷必入。", "meta": "💰 定价以平台为准<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7654083708399762835\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#5F7A8C;\">豆瓣高分榜</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": false, "crowd": "", "tag": "moviebook"}, {"id": 71, "title": "《散步后变身神奇动物》科塔萨尔", "chip": "读书", "time": "豆瓣 8.4", "desc": "2026年7月新书，拉丁美洲文学大师的幻想短篇集，想象力爆棚。《散步后变身神奇动物》豆瓣8.4，脑洞大开又温柔；适合碎片时间阅读，每篇都能当小故事讲给朋友。", "meta": "💰 78元｜南海出版公司<br>🔗 <a href=\"https://book.douban.com/tag/%E6%96%B0%E4%B9%A6?start=0&type=T\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#5F7A8C;\">豆瓣新书</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": false, "crowd": "", "tag": "moviebook"}, {"id": 900, "tag": "natureancient", "title": "聚龙古村（芳村清末古村）", "chip": "古村 · 0商业化", "time": "随时可去", "desc": "成片镬耳青砖大屋，灰塑木雕精致，几乎没有商业化，老榕树古巷道安静出片。携程/小红书多篇笔记推荐，芳村地铁口附近；半天闲逛刚好，拍照机位多，适合想避开人潮的古村爱好者。", "meta": "⏱ 2–3h｜📍市区·芳村｜👤 情侣/摄影/独行｜🚇 1号线芳村站转车｜免费<br>🔗 <a href=\"https://m.ctrip.com/webapp/you/community/detail?articleId=362478915&hidePublishButton=true&hideTitle=true&allianceid=7144873&sid=263483165\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#5F7A8C;\">携程</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": true, "crowd": "情侣/摄影/独行"}, {"id": 901, "tag": "natureancient", "title": "海鸥岛（13公里环岛骑行）", "chip": "户外 · 骑行", "time": "随时可去", "desc": "珠江口生态岛屿，13公里环岛绿道骑行吹江风，滩涂看飞鸟，亲子散心很合适。广州日报/携程笔记推荐；租单车环岛约2小时，傍晚江面日落很美，适合骑行和亲子周末。", "meta": "⏱ 半天｜📍周边·番禺石楼（车程约1h）｜👤 情侣/带娃/骑行｜🚗 自驾为主（可租单车）｜免费<br>🔗 <a href=\"https://m.ctrip.com/webapp/you/community/detail?articleId=362478915&hidePublishButton=true&hideTitle=true&allianceid=7144873&sid=263483165\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#5F7A8C;\">携程</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": true, "crowd": "情侣/带娃/骑行"}, {"id": 902, "tag": "moviebook", "title": "《大厂小民》张小满（豆瓣8.1）", "chip": "读书 · 非虚构", "time": "豆瓣 8.1", "desc": "继《我的母亲做保洁》后新作，互联网大厂1480天观察手记，项飙/梁鸿郑重推荐。豆瓣8.1（2118人评价），写职场人与算法博弈的真实生存；适合假期静读，感受普通人叙事。", "meta": "📖 文汇出版社 · 59元<br>🔗 <a href=\"https://book.douban.com/tag/%E4%B8%AD%E5%9B%BD%E6%96%87%E5%AD%A6?start=0&type=R\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#5F7A8C;\">豆瓣读书</a>", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": true, "crowd": ""}, {"id": 903, "tag": "exshow", "title": "广州塔「红动广州塔」国庆活动（10/1–7）", "chip": "演出 · 国庆", "time": "10/1–7", "desc": "红歌联唱、红色主题民族舞蹈、机器人未来舞蹈秀，首层大厅免费主题妆容。广州日报官宣，10/1-6塔身提前至9点营业；登塔+看演出一条线，机器人舞蹈适合带娃，夜间灯光秀收尾。", "meta": "⏱ 2–3h｜📍市区·广州塔｜👤 单人/情侣/带娃｜🚇 3号线/APM广州塔站｜登塔门票另购<br>🔗 <a href=\"http://news.dayoo.com/gzrbrmt/202609/21/170628_55006250.htm\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">广州日报</a>", "start": "2026-10-01", "end": "2026-10-07", "badge": "", "multisrc": true, "crowd": "单人/情侣/带娃"}];
+const HOT = [{"id": "hexshow9998", "linkId": 5, "goto": "exshow", "title": "CICF×AGF 动漫游戏盛典", "chip": "展览演出 · 热门", "time": "10/2–5 周五–周一", "desc": "琶洲保利世贸博览馆，8万㎡千余IP，湾区年度次元盛典，预售98元起。。国庆首日人流最大，建议提前订票、上午入场避开高峰；现场还有签售与赛事，coser和谷子党都能逛上大半天。", "meta": "🚇 8/11号线琶洲站C口 · 半天–1天｜单人/情侣/带娃", "start": "2026-10-02", "end": "2026-10-05", "badge": "本周主推", "multisrc": true}, {"id": "hexshow10534", "linkId": 2, "goto": "exshow", "title": "广州艺术博物院·城脉千年展", "chip": "展览演出 · 热门", "time": "10/1–6 周四–周二", "desc": "广州建城2240年得名1800年专题展，410余件文物+生活市集，免费。。免费不免票，建议官微提前预约；展馆在赤岗塔旁，看完顺路逛TIT创意园或广州塔夜景。", "meta": "🚇 12号线赤岗塔站B口 · 2–3h｜单人/情侣/带娃", "start": "2026-10-01", "end": "2026-10-06", "badge": "", "multisrc": true}, {"id": "hexshow11016", "linkId": 11, "goto": "exshow", "title": "汪苏泷「明日世界」巡回演唱会", "chip": "展览演出 · 热门", "time": "10/2–4 周五–周日", "desc": "省奥体连开三场，70米宽舞台+国内体育场最高弧形主结构。歌单偏青春向，内场看台都适合；地铁4/21号线直达，散场人多建议错峰离场。", "meta": "🚇 4/21号线黄村站 · 3h（晚间）｜情侣/朋友", "start": "2026-10-02", "end": "2026-10-04", "badge": "", "multisrc": false}, {"id": "hmarketfood11506", "linkId": 25, "goto": "marketfood", "title": "白鹅潭万象城（广州首座）", "chip": "市集探店 · 热门", "time": "9/30 开业", "desc": "9/30盛大开业，超300家品牌、冰雪滑冰场、IMAX影城，国庆逛街新地标。。新商场开业头一周人流大，建议傍晚去避开午间高峰；带娃可冲滑冰场，情侣看电影吃饭一站式。", "meta": "🚇 1号线芳村站 · 半天–1天｜单人/情侣/带娃", "start": "2026-09-30", "end": "2099-12-31", "badge": "本周主推", "multisrc": true}, {"id": "hmarketfood12024", "linkId": 26, "goto": "marketfood", "title": "白云国际啤酒美食嘉年华", "chip": "市集探店 · 热门", "time": "10/1–5 周四–周一", "desc": "16:00–21:00，啤酒+美食+音乐，白云山下城央微度假，免费入场。。傍晚去最舒服，精酿摊+粤语金曲舞台连轴转；适合朋友聚会，饮酒后记得公共交通返程。", "meta": "🚇 2/12号线白云文化广场站E口 · 2–3h（傍晚）", "start": "2026-10-01", "end": "2026-10-05", "badge": "", "multisrc": true}, {"id": "hmarketfood12509", "linkId": 24, "goto": "marketfood", "title": "广州首届超级汉堡节（国庆开吃）", "chip": "市集探店 · 热门", "time": "10/1–7 国庆", "desc": "小红书高热度新活动，各大品牌汉堡齐聚，肉食爱好者冲。地点与档期以官方公布为准，出发前先刷小红书实时笔记确认；建议中午去，趁人少一次吃遍各家招牌。", "meta": "📍 地点待官方公布，出发前查小红书实时笔记", "start": "2026-10-01", "end": "2026-10-07", "badge": "", "multisrc": false}, {"id": "hnatureancient13002", "linkId": 42, "goto": "natureancient", "title": "帽峰山森林公园（红枫全盛）", "chip": "户外古街 · 热门", "time": "红枫全盛", "desc": "广州近郊赏枫秘境，三千余株鸡爪槭全盛观赏期，门票10元。。红叶最浓在上午9-11点逆光时段，拍照更通透；山路平缓适合带娃，记得带水和薄外套。", "meta": "🚗 车程约1h（白云太和）· 3–4h｜单人/情侣/带娃", "start": "2026-09-01", "end": "2026-12-31", "badge": "", "multisrc": true}, {"id": "hnatureancient13473", "linkId": 45, "goto": "natureancient", "title": "海珠小众citywalk（小红书宝藏）", "chip": "户外古街 · 热门", "time": "随时可去", "desc": "中大南校区→纯阳观→晓港公园→十香园，人少治愈不花钱逛一整天。小红书高分citywalk路线；中大需「中大逸码通行」小程序预约（除周一外开放），全程4-5小时慢慢走，适合想避开人潮的一天。", "meta": "🚇 8号线中大站A口出发 · 免费", "start": "2026-01-01", "end": "2099-12-31", "badge": "小众宝藏", "multisrc": false}, {"id": "hmoviebook14027", "goto": "moviebook", "title": "🎬《欢迎来龙餐馆》·《八仙！》", "chip": "电影读书 · 热门", "time": "在映中", "desc": "在映口碑双王：沈腾×文牧野《欢迎来龙餐馆》票房破22亿（豆瓣8.7）；《八仙！》国产动画猫眼9.7（豆瓣8.2）。两部都还在映，国庆档挑一场错峰场次就能连看；具体排片用猫眼查。", "meta": "🎬 各大影院热映中 · <a href=\"https://i.maoyan.com/\" target=\"_blank\" rel=\"noopener noreferrer\">猫眼查排片</a>", "start": "2026-08-11", "end": "2026-10-12", "badge": "", "multisrc": false}, {"id": "hmoviebook14576", "linkId": 68, "goto": "moviebook", "title": "📖《落在我身上的雨》陆庆屹", "chip": "电影读书 · 热门", "time": "豆瓣 9.2", "desc": "《四个春天》后全新散文集，文字版生活诗意，豆瓣9.2高分。", "meta": "📖 新星出版社 · 59元", "start": "2026-01-01", "end": "2099-12-31", "badge": "", "multisrc": false}];
+const HOT_TOPIC = [{"id": "ht1", "title": "聚龙湾太古里一期 9/28 启幕（全国首个滨水太古里）", "heat": "🔥爆火", "heatn": 3, "desc": "太古地产大湾区首个太古里开放式街区，保留老厂房仓库与百年古榕，「榕、仓、水」动线，SKULLPANDA全国首站同步亮相。中国广州发布、广州日报、市政府多源官宣，开业第一周建议错峰前往。", "meta": "📍市区·荔湾聚龙湾｜🚇 1号线芳村站附近｜免费逛｜⏱ 半天–1天<br>🔗 <a href=\"http://m.toutiao.com/group/7690495003667300907/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">中国广州发布</a>", "start": "2026-09-28", "end": "2099-12-31", "multisrc": true}, {"id": "ht2", "title": "白鹅潭万象城 9/30 启幕（广州首座万象城）", "heat": "🔥爆火", "heatn": 5, "desc": "超300家品牌、六成首店旗舰店，冰雪滑冰场+IMAX影城，与珠江岸线夜景联动。市政府、广州日报、商务局等多源官宣，9/30开业，国庆假期人流集中，建议傍晚后去。", "meta": "📍市区·荔湾白鹅潭｜🚇 1号线芳村站｜免费逛｜⏱ 半天–1天<br>🔗 <a href=\"https://www.gz.gov.cn/ysgz/xwdt/ysdt/content/post_11009605.html\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">广州市政府</a>", "start": "2026-09-30", "end": "2099-12-31", "multisrc": true}, {"id": "ht3", "title": "广州音乐公园《极SHOW》音乐节（奥体南侧新地标）", "heat": "📈升温", "heatn": 2, "desc": "10万㎡城市音乐主题公园，主打粤语流行音乐、365天不打烊，国庆携《极SHOW》音乐节来袭。市政府、市委网信办两源确认；地铁4/21号线黄村站可达，音乐爱好者新去处。", "meta": "📍市区·奥体南侧｜🚇 4/21号线黄村站｜票价以官方为准｜⏱ 2–3h<br>🔗 <a href=\"https://igz.gzwxb.gov.cn/context/contextId/216960\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">市委网信办</a>", "start": "2026-10-01", "end": "2026-10-31", "multisrc": true}, {"id": "ht4", "title": "张韶涵「玩家」巡演广州站开票（12/26天河体育中心）", "heat": "📈升温", "heatn": 2, "desc": "9/28 13:18 正式开票，双人套票可邀友同行，抖音演出票多个话题刷屏。12/26天河体育中心体育场；想去的建议趁早订票，热门歌手票档紧张。", "meta": "📍市区·天河体育中心｜🚇 1/3号线体育西路站｜票价以官方为准｜⏱ 3h（晚间）<br>🔗 <a href=\"https://www.iesdouyin.com/share/video/7689827939920262011\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">抖音演出</a>", "start": "2026-12-26", "end": "2026-12-26", "multisrc": true}, {"id": "ht5", "title": "嘉禾望岗站「砍人」传闻·官方已辟谣", "heat": "📈升温", "heatn": 3, "desc": "网传地铁嘉禾望岗站发生砍人事件，广州地铁官方辟谣：现场一切如常，系返程大客流。南方都市报、广州地铁、多家媒体跟进；此类不实传闻勿信勿传，出行以官方信息为准。", "meta": "📍辟谣信息｜来源：广州地铁官方微博｜⏱ 无需前往<br>🔗 <a href=\"http://m.toutiao.com/group/7690498821478023721/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">南方都市报</a>", "start": "2026-09-27", "end": "2026-09-28", "multisrc": true}, {"id": "ht6", "title": "2026广州汉服文化季启幕（白云站）", "heat": "单源参考", "heatn": 1, "desc": "在亚洲最大TOD枢纽之一广州白云站启动，汉服巡游+文化展示，国风爱好者话题。广州日报报道；留意官方后续排期，适合汉服同好周末打卡。", "meta": "📍市区·广州白云站｜🚇 2/12号线白云站｜免费参与（部分项目另计）｜⏱ 2–3h<br>🔗 <a href=\"https://news.dayoo.com/guangzhou/150956.shtml?addrandpara=696\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">广州日报</a>", "start": "2026-09-26", "end": "2026-10-08", "multisrc": false}, {"id": "ht7", "title": "黄埔浪漫咖啡地图发布（周末citywalk新玩法）", "heat": "单源参考", "heatn": 1, "desc": "黄埔区官方发布浪漫咖啡地图，串联咖啡馆+打卡点，适合周末咖啡citywalk。市政府今日关注发布；按地图挨家探店，拍照出片，咖啡爱好者可收藏。", "meta": "📍周边·黄埔区｜🚗 自驾/地铁沿线｜人均30–60元｜⏱ 半天<br>🔗 <a href=\"https://www.gz.gov.cn/xw/jrgz/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">广州市政府</a>", "start": "2026-09-27", "end": "2099-12-31", "multisrc": false}, {"id": "ht8", "title": "十香园国风游园打卡（岭南画派发源地）", "heat": "单源参考", "heatn": 1, "desc": "十香园国风游园活动开启，汉服游园+打卡，岭南画派祖师居巢居廉故里。市政府今日关注发布；免费入园，适合穿汉服拍照，顺路逛海珠老城区。", "meta": "📍市区·海珠十香园｜🚇 8号线昌岗站转车｜免费｜⏱ 2h<br>🔗 <a href=\"https://www.gz.gov.cn/xw/jrgz/\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"color:#2E7D5B;\">广州市政府</a>", "start": "2026-09-27", "end": "2026-10-07", "multisrc": false}];
+
+/* ================= 状态 ================= */
+// 内容更新时间（定时任务每次生成时自动更新为当天日期）
+const UPDATED = '2026-09-28';
+const TODAY = new Date();
+const fmt = d => d.toISOString().slice(0,10);
+let timeDays = 14;
+let currentView = 'home';   // home | mine | 标签id
+let crowdFilter = '';
+
+/* ================= 三态标记：想去want / 去过done / 不感兴趣no ================= */
+let marks = {};   // {cardId: 'want'|'done'|'no'}
+try{
+  marks = JSON.parse(localStorage.getItem('gz_marks')||'{}');
+}catch(e){}
+// 广州HOT为话题/事件，不再支持三态标记：清理历史标记
+Object.keys(marks).forEach(k=>{
+  if(HOT_TOPIC.some(h=>String(h.id)===k)) delete marks[k];
+});
+// 迁移：热门卡旧 id 的标记合并到统一 key（linkId）
+HOT.forEach(h=>{
+  if(h.linkId != null && marks[String(h.id)] != null){
+    marks[String(h.linkId)] = marks[String(h.id)];
+    delete marks[String(h.id)];
+  }
+});
+saveMarks();
+function saveMarks(){
+  try{ localStorage.setItem('gz_marks', JSON.stringify(marks)); }catch(e){}
+}
+function setMark(id, state){
+  if(marks[id] === state) delete marks[id];  // 反悔：再点同一状态取消
+  else marks[id] = state;
+  saveMarks();
+}
+function clearMarks(){
+  marks = {}; saveMarks();
+}
+function sharePage(){
+  const url = location.href;
+  const text = '广州好去处·周末推荐｜展览演出/市集探店/户外古街/电影读书 + 本周天气指数，点开即看最新版';
+  if(navigator.share){
+    navigator.share({title:'广州好去处', text:text, url:url}).catch(()=>{});
+  }else if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(()=>{ alert('链接已复制，发给朋友即可打开同一份推荐'); });
+  }else{
+    prompt('复制以下链接分享给朋友：', url);
+  }
+}
+
+/* ================= 时间窗口 ================= */
+function inWindow(it){
+  const start = it.start || '2000-01-01';
+  const end = it.end || '2099-12-31';
+  const wStart = new Date(TODAY.getTime() - 0);
+  const wEnd = new Date(TODAY.getTime() + timeDays*86400000);
+  const s = new Date(start + 'T00:00:00');
+  const e = new Date(end + 'T23:59:59');
+  return s <= wEnd && e >= wStart;
+}
+function isExpired(it){
+  return it.end && it.end < fmt(TODAY);
+}
+function isSoon(it){
+  if(!it.end) return false;
+  const e = new Date(it.end + 'T00:00:00');
+  const soon = new Date(TODAY.getTime() + 3*86400000);
+  return e >= new Date(fmt(TODAY)+'T00:00:00') && e <= soon;
+}
+
+/* ================= 排序 ================= */
+function sortCards(arr){
+  return arr.slice().sort((a,b)=>{
+    const ba = a.badge==='本周主推'?0:1, bb=b.badge==='本周主推'?0:1;
+    if(ba!==bb) return ba-bb;
+    const ma = a.multisrc?0:1, mb=b.multisrc?0:1;
+    if(ma!==mb) return ma-mb;
+    return (a.start||'2099').localeCompare(b.start||'2099');
+  });
+}
+
+/* ================= 过滤 ================= */
+function filterCards(arr){
+  let out = arr.filter(inWindow);
+  if(crowdFilter){
+    out = out.filter(it => (it.crowd||'').includes(crowdFilter));
+  }
+  return sortCards(out);
+}
+
+/* ================= 渲染工具 ================= */
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const safeHtml = s => String(s||'');
+
+const MARK_NAME = {want:'想去', done:'去过', no:'不感兴趣'};
+// 标记统一 key：热门卡绑定对应分类卡 id，两端同步
+const markKey = it => it.linkId != null ? String(it.linkId) : String(it.id);
+
+function markBadgeHtml(id){
+  const m = marks[id];
+  if(!m) return '';
+  return `<span class="badge-mark ${m}">${MARK_NAME[m]}</span>`;
+}
+
+function markBtnsHtml(id){
+  const m = marks[id]||'';
+  return `<div class="mark-btns">
+    <button class="mark-btn want${m==='want'?' on':''}" type="button" data-mark="want" data-id="${esc(String(id))}">想去</button>
+    <button class="mark-btn done${m==='done'?' on':''}" type="button" data-mark="done" data-id="${esc(String(id))}">去过</button>
+    <button class="mark-btn no${m==='no'?' on':''}" type="button" data-mark="no" data-id="${esc(String(id))}">不感兴趣</button>
+  </div>`;
+}
+
+function cardHtml(it, withGoto){
+  const tags = [];
+  if(it.badge==='本周主推') tags.push('<span class="badge-main">本周主推</span>');
+  if(it.badge==='小众宝藏') tags.push('<span class="badge-main" style="background:#23C3C0;">小众宝藏</span>');
+  if(isExpired(it)) tags.push('<span class="badge-end">已结束</span>');
+  else if(isSoon(it)) tags.push('<span class="badge-soon">即将结束</span>');
+  const m = marks[markKey(it)];
+  if(m) tags.push(markBadgeHtml(markKey(it)));
+  const cls = [
+    'card',
+    isExpired(it)?'expired':'',
+    m==='no'?'mark-no':'',
+    m==='want'?'mark-want':'',
+    m==='done'?'mark-done':''
+  ].filter(Boolean).join(' ');
+  const tag = it.tag;
+  const chipStyle = `background:${TAG_CHIP_BG[tag]};color:${TAG_CHIP_FG[tag]};`;
+  // 拆分来源链接与信息：链接移到顶部行，避免与标记按钮误触
+  let metaInfo = safeHtml(it.meta||'');
+  let srcHtml = '';
+  const srcM = String(it.meta||'').match(/🔗\s*<a\s+href="([^"]+)"[^>]*>([^<]+)<\/a>/);
+  if(srcM){
+    srcHtml = `<a class="src-link" href="${esc(srcM[1])}" target="_blank" rel="noopener noreferrer">🔗 来源：${safeHtml(srcM[2])}</a>`;
+    metaInfo = metaInfo.replace(/🔗\s*<a\s+href="[^"]+"[^>]*>[^<]+<\/a>/, '');
+  }
+  const gotoBtn = withGoto && it.tag && TAGS.includes(it.tag)
+    ? `<button class="goto-btn" type="button" data-goto="${it.tag}" data-title="${esc(it.title)}">查看同类 →</button>`
+    : '';
+  return `<article class="${cls}" data-id="${esc(String(it.id))}" style="--tag-color:${TAG_COLOR[tag]||'#3FA97A'};">
+    <div class="tag-row"><span class="chip" style="${chipStyle}">${safeHtml(it.chip||'')}</span><time>${safeHtml(it.time||'')}</time>${it.multisrc?'<span class="multisrc-tag">✓多源确认</span>':''}${tags.join('')}${srcHtml}</div>
+    <h3 class="title">${safeHtml(it.title||'')}</h3>
+    <p class="desc">${safeHtml(it.desc||'')}</p>
+    <div class="meta">${metaInfo.replace(/<br>\s*$/, '')}</div>
+    <div class="mark-row">${markBtnsHtml(markKey(it))}</div>
+  </article>`;
+}
+
+function hotTopicHtml(it){
+  const tags = [];
+  const heatCls = it.heat && it.heat.includes('爆火') ? 'hot' : 'warm';
+  tags.push(`<span class="heat-tag ${heatCls}">${safeHtml(it.heat||'')}</span>`);
+  if(isExpired(it)) tags.push('<span class="badge-end">已结束</span>');
+  const cls = ['card', isExpired(it)?'expired':''].filter(Boolean).join(' ');
+  let metaInfo = safeHtml(it.meta||'');
+  let srcHtml = '';
+  const srcM = String(it.meta||'').match(/🔗\s*<a\s+href="([^"]+)"[^>]*>([^<]+)<\/a>/);
+  if(srcM){
+    srcHtml = `<a class="src-link" href="${esc(srcM[1])}" target="_blank" rel="noopener noreferrer">🔗 来源：${safeHtml(srcM[2])}</a>`;
+    metaInfo = metaInfo.replace(/🔗\s*<a\s+href="[^"]+"[^>]*>[^<]+<\/a>/, '');
+  }
+  return `<article class="${cls}" data-id="${esc(String(it.id))}" style="--tag-color:${TAG_COLOR.hot};">
+    <div class="tag-row"><span class="chip" style="background:${TAG_CHIP_BG.hot};color:${TAG_CHIP_FG.hot};">热门</span><time>${safeHtml(it.time||'')}</time>${it.multisrc?'<span class="multisrc-tag">✓多源确认</span>':''}${tags.join('')}${srcHtml}</div>
+    <h3 class="title">${safeHtml(it.title||'')}</h3>
+    <p class="desc">${safeHtml(it.desc||'')}</p>
+    <div class="meta">${metaInfo.replace(/<br>\s*$/, '')}</div>
+  </article>`;
+}
+
+function hotHtml(h){
+  const tags = [];
+  if(h.badge==='本周主推') tags.push('<span class="badge-main">本周主推</span>');
+  if(h.badge==='小众宝藏') tags.push('<span class="badge-main" style="background:#23C3C0;">小众宝藏</span>');
+  const m = marks[markKey(h)];
+  if(m) tags.push(markBadgeHtml(markKey(h)));
+  const cls = ['hot-card', m==='no'?'mark-no':'', m==='want'?'mark-want':'', m==='done'?'mark-done':''].filter(Boolean).join(' ');
+  let metaInfo = safeHtml(h.meta||'');
+  let srcHtml = '';
+  const srcM = String(h.meta||'').match(/🔗\s*<a\s+href="([^"]+)"[^>]*>([^<]+)<\/a>/);
+  if(srcM){
+    srcHtml = `<a class="src-link" href="${esc(srcM[1])}" target="_blank" rel="noopener noreferrer">🔗 来源：${safeHtml(srcM[2])}</a>`;
+    metaInfo = metaInfo.replace(/🔗\s*<a\s+href="[^"]+"[^>]*>[^<]+<\/a>/, '');
+  }
+  return `<article class="${cls}" data-id="${esc(String(h.id))}">
+    <div class="tag-row"><span class="chip" style="background:${TAG_CHIP_BG[h.goto]};color:${TAG_CHIP_FG[h.goto]};">${safeHtml(h.chip||'')}</span><time>${safeHtml(h.time||'')}</time>${h.multisrc?'<span class="multisrc-tag">✓多源确认</span>':''}${tags.join('')}${srcHtml}</div>
+    <h3 class="title">${safeHtml(h.title||'')}</h3>
+    <p class="desc">${safeHtml(h.desc||'')}</p>
+    <div class="meta">${metaInfo.replace(/<br>\s*$/, '')}</div>
+    <div class="mark-row">${markBtnsHtml(markKey(h))}</div>
+  </article>`;
+}
+
+/* ================= 首页 ================= */
+function byTag(tag){
+  return ITEMS.filter(it => it.tag === tag);
+}
+
+function renderHome(){
+  // 热门卡（不跳转，仅展示+标记）
+  const grid = document.getElementById('hotGrid');
+  const hotBlock = document.querySelector('.hot-block-title');
+  if(hotBlock) hotBlock.innerHTML = '🔥 本周热门 <span class="sub">· 各标签人气之选</span>';
+  grid.innerHTML = HOT.map(hotHtml).join('');
+  // 全部信息按标签分组
+  const groups = document.getElementById('homeGroups');
+  let html = '';
+  const order = ['exshow','marketfood','natureancient','moviebook'];
+  order.forEach(tag=>{
+    const arr = filterCards(byTag(tag));
+    if(arr.length===0) return;
+    html += `<div class="group-block">
+      <div class="group-title" style="border-left-color:${TAG_COLOR[tag]};color:${TAG_CHIP_FG[tag]};"><span class="g-icon">${TAG_ICON[tag]}</span>${TAG_NAME[tag]}<span class="g-count">${crowdFilter?'（人群：'+esc(crowdFilter)+'）':''}· ${arr.length} 个</span></div>
+      <div class="grid">${arr.map(it=>cardHtml(it,false)).join('')}</div>
+    </div>`;
+  });
+  groups.innerHTML = html || '<p style="color:#7b8f86;padding:20px 0;">当前筛选条件下暂无推荐。</p>';
+  if(html){ groups.insertAdjacentHTML('beforeend', '<button class="to-top" type="button">↑ 返回顶部</button>'); }
+}
+
+/* ================= 标签页（含广州HOT） ================= */
+function renderTag(tag){
+  const page = document.getElementById('page-' + tag);
+  let html = `<div class="page-head">${TAG_ICON[tag]} ${TAG_NAME[tag]} <span class="note">${TAG_NOTE[tag]}</span></div>`;
+  let arr;
+  if(tag==='hot'){
+    arr = HOT_TOPIC.slice().sort((a,b)=> (a.heatn||0)-(b.heatn||0));
+    html += `<div class="result-info">本周全网热议 ${arr.length} 条 · 多平台交叉验证，重复出现越多越靠前</div>`;
+    html += '<div class="grid">' + arr.map(hotTopicHtml).join('') + '</div>';
+  }else{
+    arr = filterCards(byTag(tag));
+    html += `<div class="result-info">共 ${arr.length} 个推荐${crowdFilter?'（人群：'+esc(crowdFilter)+'）':''}</div>`;
+    if(arr.length===0){
+      html += '<p style="color:#7b8f86;padding:20px 0;">当前筛选条件下暂无推荐，试试放宽时间或清除筛选。</p>';
+    }else{
+      html += '<div class="grid">' + arr.map(it=>cardHtml(it,false)).join('') + '</div>';
+    }
+  }
+  html += `<button class="to-top" type="button">↑ 返回顶部</button>`;
+  page.innerHTML = html;
+}
+
+/* ================= 我的页 ================= */
+function renderMine(){
+  const page = document.getElementById('page-mine');
+  const groups = ['want','done','no'];
+  const ids = Object.keys(marks);
+  if(ids.length===0){
+    page.innerHTML = `
+      <div class="page-head">👤 我的</div>
+      <div class="mine-empty">
+        <p>还没有标记任何地点<br>去首页逛逛，给想去的地方点个「想去」吧</p>
+        <button class="mine-share" type="button" id="shareBtn">📤 分享这份推荐</button>
+        <button class="to-top" type="button" data-gohome="1">🏠 返回首页</button>
+      </div>`;
+    return;
+  }
+  let html = `<div class="page-head">👤 我的 <span class="note">（已标记 ${ids.length} 个）</span></div>
+    <div class="mine-tools">
+      <button class="mine-clear" type="button" id="clearMarksBtn">🗑 清除全部标记</button>
+      <button class="mine-share" type="button" id="shareBtn">📤 分享这份推荐</button>
+    </div>`;
+  groups.forEach(g=>{
+    const list = ids.filter(id=>marks[id]===g).map(id=>{
+      // 从 ITEMS / HOT / HOT_TOPIC 找卡
+      let it = ITEMS.find(x=>String(x.id)===id) || HOT.find(x=>String(x.linkId)===id || String(x.id)===id);
+      if(!it) return '';
+      if(it.goto){ return hotHtml(it); }
+      if(it.heat){ return hotTopicHtml(it); }
+      return cardHtml(it, true);
+    }).filter(Boolean);
+    if(list.length===0) return;
+    const colors = {want:'#F6B455', done:'#3FA97A', no:'#b8b8b2'};
+    html += `<div class="mine-group-title" style="color:${colors[g]};">${MARK_NAME[g]}（${list.length}）</div>
+      <div class="grid">${list.join('')}</div>`;
+  });
+  html += `<button class="to-top" type="button">↑ 返回顶部</button>`;
+  page.innerHTML = html;
+}
+
+/* ================= 导航 ================= */
+function renderTabs(){
+  const nav = document.getElementById('tabNav');
+  nav.innerHTML = TAGS.map(t=>`
+    <button class="tab" type="button" role="tab" data-page="${t}" aria-selected="${currentView===t?'true':'false'}">${TAG_NAME[t]}</button>
+  `).join('');
+}
+
+function renderBottomBar(){
+  const tabs = document.querySelectorAll('.bottom-tab');
+  tabs.forEach(t=>{
+    const on = currentView===t.dataset.view;
+    t.setAttribute('aria-selected', on?'true':'false');
+  });
+}
+
+function showPage(view){
+  currentView = view;
+  renderTabs();
+  renderBottomBar();
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  let target;
+  if(view==='home'){ target = document.getElementById('page-home'); }
+  else if(view==='mine'){ target = document.getElementById('page-mine'); }
+  else { target = document.getElementById('page-' + view); }
+  if(target) target.classList.add('active');
+  if(view==='home') renderHome();
+  else if(view==='mine') renderMine();
+  else renderTag(view);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ================= 事件绑定（委托） ================= */
+document.addEventListener('click', e=>{
+  const t = e.target;
+  // 三态标记（含反悔）
+  const mb = t.closest('.mark-btn');
+  if(mb){
+    setMark(mb.dataset.id, mb.dataset.mark);
+    refreshCurrent();
+    return;
+  }
+  // 查看同类
+  const gb = t.closest('.goto-btn');
+  if(gb){ showPage(gb.dataset.goto); return; }
+  // 天气展开
+  const wt = t.closest('.weather-toggle');
+  if(wt){
+    const card = document.getElementById('weatherCard');
+    const open = card.classList.toggle('open');
+    wt.setAttribute('aria-expanded', open?'true':'false');
+    return;
+  }
+  // 返回顶部 / 返回首页
+  const tt = t.closest('.to-top');
+  if(tt){
+    if(tt.dataset.gohome){ showPage('home'); return; }
+    window.scrollTo({top:0,behavior:'smooth'});
+    return;
+  }
+  // 人群筛选
+  const cc = t.closest('.crowd-chip');
+  if(cc){
+    document.querySelectorAll('.crowd-chip').forEach(c=>c.classList.remove('active'));
+    cc.classList.add('active');
+    crowdFilter = cc.dataset.crowd;
+    refreshCurrent();
+    return;
+  }
+  // 清除全部标记
+  if(t.id==='clearMarksBtn'){ clearMarks(); renderMine(); return; }
+  // 分享
+  if(t.id==='shareBtn'){ sharePage(); return; }
+});
+
+function refreshCurrent(){
+  if(currentView==='home') renderHome();
+  else if(currentView==='mine') renderMine();
+  else renderTag(currentView);
+}
+
+// 顶部标签
+document.getElementById('tabNav').addEventListener('click', e=>{
+  const btn = e.target.closest('.tab');
+  if(btn) showPage(btn.dataset.page);
+});
+
+// 底部栏
+document.querySelectorAll('.bottom-tab').forEach(btn=>{
+  btn.addEventListener('click', ()=>showPage(btn.dataset.view));
+});
+
+// 时间筛选
+document.getElementById('timeWindow').addEventListener('change', ()=>{
+  timeDays = parseInt(document.getElementById('timeWindow').value, 10);
+  refreshCurrent();
+});
+
+/* ================= 初始化 ================= */
+(function(){
+  const el = document.getElementById('updatedAt');
+  if(el){
+    el.textContent = UPDATED;
+    const nxt = new Date(UPDATED + 'T00:00:00');
+    nxt.setDate(nxt.getDate() + 3);
+    const nd = nxt.toISOString().slice(0,10);
+    const nb = document.createElement('span');
+    nb.innerHTML = ' · 下次更新 <b>' + nd + '</b>';
+    el.parentNode.insertBefore(nb, el.nextSibling);
+  }
+})();
+showPage('home');
+</script>
+</body>
+</html>
