@@ -201,7 +201,7 @@ section.hot-section{margin:8px 0 4px;}
 }
 .mine-share:hover{background:var(--primary-deep);border-color:var(--primary-deep);}
 .mine-empty .mine-share{margin:0 auto 12px;}
-.mine-group-title{font-size:14px;font-weight:800;margin:12px 0 8px;display:flex;align-items:center;gap:6px;}
+.mine-group-title{font-size:14px;font-weight:800;margin:12px 0 8px;display:flex;align-items:center;gap:6px;justify-content:space-between;}
 
 /* ===== 页脚 ===== */
 footer{text-align:center;font-size:11px;color:var(--muted);padding:14px 0 8px;line-height:1.8;}
@@ -431,6 +431,16 @@ function buildAllShareText(){
   L.push('票价与场次请以官方最新公告为准');
   return L.join('\n');
 }
+// 分组分享文本：想去/去过/不感兴趣
+function buildGroupShareText(g, items){
+  const L = [];
+  L.push('「广州好去处」· ' + MARK_NAME[g] + '（' + items.length + '个）');
+  L.push('更新于 ' + UPDATED);
+  L.push('');
+  items.forEach(it=>{ L.push(shareTextFor(it)); L.push(''); });
+  L.push('信息来源：本地宝、小红书、官方公众号、大麦、美团、大众点评、豆瓣、知乎、B站等交叉核对');
+  return L.join('\n');
+}
 function getCardItem(key){
   return ITEMS.find(x=>String(x.id)===key)
       || HOT.find(x=>String(x.linkId)===key || String(x.id)===key)
@@ -647,7 +657,6 @@ function renderMine(){
       <div class="page-head">👤 我的</div>
       <div class="mine-empty">
         <p>还没有标记任何地点<br>去首页逛逛，给想去的地方点个「想去」吧</p>
-        <button class="mine-share" type="button" id="shareBtn">📤 分享这份推荐</button>
         <button class="to-top" type="button" data-gohome="1">🏠 返回首页</button>
       </div>`;
     return;
@@ -655,7 +664,6 @@ function renderMine(){
   let html = `<div class="page-head">👤 我的 <span class="note">（已标记 ${ids.length} 个）</span></div>
     <div class="mine-tools">
       <button class="mine-clear" type="button" id="clearMarksBtn">🗑 清除全部标记</button>
-      <button class="mine-share" type="button" id="shareBtn">📤 分享这份推荐</button>
     </div>`;
   groups.forEach(g=>{
     const list = ids.filter(id=>marks[id]===g).map(id=>{
@@ -668,7 +676,9 @@ function renderMine(){
     }).filter(Boolean);
     if(list.length===0) return;
     const colors = {want:'#F6B455', done:'#3FA97A', no:'#b8b8b2'};
-    html += `<div class="mine-group-title" style="color:${colors[g]};">${MARK_NAME[g]}（${list.length}）</div>
+    html += `<div class="mine-group-title" style="color:${colors[g]};">${MARK_NAME[g]}（${list.length}）
+        <button class="share-btn" type="button" data-share-group="${g}">📤 分享</button>
+      </div>
       <div class="grid">${list.join('')}</div>`;
   });
   html += `<button class="to-top" type="button">↑ 返回顶部</button>`;
@@ -746,6 +756,18 @@ document.addEventListener('click', e=>{
   }
   // 清除全部标记
   if(t.id==='clearMarksBtn'){ clearMarks(); renderMine(); return; }
+  // 分组分享（我的页：想去/去过/不感兴趣）
+  const sgrp = t.closest('[data-share-group]');
+  if(sgrp){
+    const g = sgrp.dataset.shareGroup;
+    const items = Object.keys(marks).filter(id=>marks[id]===g).map(id=>getCardItem(id)).filter(Boolean);
+    if(items.length){
+      copyText(buildGroupShareText(g, items)).then(ok=>{
+        toast(ok ? '已复制「' + MARK_NAME[g] + '」' + items.length + ' 张卡片文字，粘贴即可分享' : '复制失败，请手动复制');
+      });
+    }
+    return;
+  }
   // 单卡分享：复制文字+来源链接
   const sb = t.closest('.share-btn');
   if(sb){
