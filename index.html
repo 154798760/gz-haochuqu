@@ -94,8 +94,21 @@ p.desc{font-size:13px;color:#4a5b52;}
 .meta{font-size:12px;color:var(--muted);margin-top:auto;}
 .meta a{color:var(--primary-deep);text-decoration:underline;word-break:break-all;}
 .src-link{color:var(--primary-deep);font-size:11px;text-decoration:underline;white-space:nowrap;}
-.mark-row{border-top:1px dashed var(--line);padding-top:8px;margin-top:4px;}
+.mark-row{border-top:1px dashed var(--line);padding-top:8px;margin-top:4px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .mark-btns{display:flex;gap:8px;flex-wrap:wrap;}
+.share-btn{
+  border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;
+  font-size:12px;color:var(--muted);cursor:pointer;flex-shrink:0;white-space:nowrap;
+  transition:all .15s ease;
+}
+.share-btn:hover{border-color:var(--primary);color:var(--primary-deep);}
+.share-row{display:flex;justify-content:flex-end;margin-top:8px;}
+#toastBox{
+  position:fixed;left:50%;bottom:96px;transform:translateX(-50%);
+  background:rgba(32,44,38,.94);color:#fff;font-size:13px;padding:10px 18px;border-radius:999px;
+  z-index:9999;opacity:0;pointer-events:none;transition:opacity .25s ease;max-width:86vw;text-align:center;
+}
+#toastBox.show{opacity:1;}
 .mark-btn{
   border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 16px;
   font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s ease;
@@ -358,16 +371,76 @@ function setMark(id, state){
 function clearMarks(){
   marks = {}; saveMarks();
 }
-function sharePage(){
-  const url = location.href;
-  const text = '广州好去处·周末推荐｜展览演出/市集探店/户外古街/电影读书 + 本周天气指数，点开即看最新版';
-  if(navigator.share){
-    navigator.share({title:'广州好去处', text:text, url:url}).catch(()=>{});
-  }else if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(url).then(()=>{ alert('链接已复制，发给朋友即可打开同一份推荐'); });
-  }else{
-    prompt('复制以下链接分享给朋友：', url);
+function copyText(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(text).then(()=>true).catch(()=>fallbackCopy(text));
   }
+  return Promise.resolve(fallbackCopy(text));
+}
+function fallbackCopy(text){
+  try{
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  }catch(e){ return false; }
+}
+function toast(msg){
+  let el = document.getElementById('toastBox');
+  if(!el){ el = document.createElement('div'); el.id = 'toastBox'; document.body.appendChild(el); }
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>el.classList.remove('show'), 2200);
+}
+// 单卡分享文本：标题/时间/主要信息逐行对齐 + 亮点 + 来源链接
+function shareTextFor(it){
+  const L = [];
+  const title = String(it.title||'').replace(/<[^>]+>/g,'').trim();
+  const chip = String(it.chip||'').replace(/<[^>]+>/g,'').trim();
+  L.push('【' + title + '】' + (chip ? '（' + chip + '）' : ''));
+  if(it.time) L.push('🗓 ' + it.time);
+  const metaAll = String(it.meta||'');
+  const srcM = metaAll.match(/href="([^"]+)"[^>]*>([^<]+)<\/a>/);
+  let srcName='', srcUrl='';
+  if(srcM){ srcName = srcM[2].replace(/<[^>]+>/g,'').trim(); srcUrl = srcM[1]; }
+  (metaAll.split('<br>')[0]||'').split('｜').forEach(p=>{
+    p = p.replace(/<[^>]+>/g,'').trim();
+    if(p) L.push(p);
+  });
+  const d = String(it.desc||'').replace(/<[^>]+>/g,'').replace(/。。/g,'；').trim();
+  if(d) L.push('✨ ' + d);
+  if(srcName && srcUrl) L.push('🔗 来源：' + srcName + ' ' + srcUrl);
+  return L.join('\n');
+}
+// 全部卡片分享文本：按标签分组对齐
+function buildAllShareText(){
+  const L = [];
+  L.push('「广州好去处」本期内推荐');
+  L.push('更新于 ' + UPDATED + ' ｜ 展览演出 / 市集探店 / 户外古街 / 电影读书');
+  L.push('');
+  TAGS.forEach(tag=>{
+    const arr = ITEMS.filter(it=>it.tag===tag && inWindow(it));
+    if(!arr.length) return;
+    L.push('━━━ ' + TAG_NAME[tag] + '（' + arr.length + '个）━━━');
+    arr.forEach(it=>{ L.push(shareTextFor(it)); L.push(''); });
+  });
+  L.push('━━━━━━━━━━━━━━━━━━');
+  L.push('信息来源：本地宝、小红书、官方公众号、大麦、美团、大众点评、豆瓣、知乎、B站等交叉核对');
+  L.push('票价与场次请以官方最新公告为准');
+  return L.join('\n');
+}
+function getCardItem(key){
+  return ITEMS.find(x=>String(x.id)===key)
+      || HOT.find(x=>String(x.linkId)===key || String(x.id)===key)
+      || HOT_TOPIC.find(x=>String(x.id)===key);
+}
+function sharePage(){
+  const text = buildAllShareText();
+  copyText(text).then(ok=>{
+    toast(ok ? '已复制全部卡片文字（' + ITEMS.length + ' 张），粘贴即可分享' : '复制失败，请手动复制');
+  });
 }
 
 /* ================= 时间窗口 ================= */
@@ -466,7 +539,7 @@ function cardHtml(it, withGoto){
     <h3 class="title">${safeHtml(it.title||'')}</h3>
     <p class="desc">${safeHtml(it.desc||'')}</p>
     <div class="meta">${metaInfo.replace(/<br>\s*$/, '')}</div>
-    <div class="mark-row">${markBtnsHtml(markKey(it))}</div>
+    <div class="mark-row">${markBtnsHtml(markKey(it))}<button class="share-btn" type="button" data-share="${esc(markKey(it))}">📤 分享</button></div>
   </article>`;
 }
 
@@ -488,6 +561,7 @@ function hotTopicHtml(it){
     <h3 class="title">${safeHtml(it.title||'')}</h3>
     <p class="desc">${safeHtml(it.desc||'')}</p>
     <div class="meta">${metaInfo.replace(/<br>\s*$/, '')}</div>
+    <div class="share-row"><button class="share-btn" type="button" data-share="${esc(String(it.id))}">📤 分享</button></div>
   </article>`;
 }
 
@@ -510,7 +584,7 @@ function hotHtml(h){
     <h3 class="title">${safeHtml(h.title||'')}</h3>
     <p class="desc">${safeHtml(h.desc||'')}</p>
     <div class="meta">${metaInfo.replace(/<br>\s*$/, '')}</div>
-    <div class="mark-row">${markBtnsHtml(markKey(h))}</div>
+    <div class="mark-row">${markBtnsHtml(markKey(h))}<button class="share-btn" type="button" data-share="${esc(markKey(h))}">📤 分享</button></div>
   </article>`;
 }
 
@@ -672,7 +746,18 @@ document.addEventListener('click', e=>{
   }
   // 清除全部标记
   if(t.id==='clearMarksBtn'){ clearMarks(); renderMine(); return; }
-  // 分享
+  // 单卡分享：复制文字+来源链接
+  const sb = t.closest('.share-btn');
+  if(sb){
+    const it = getCardItem(sb.dataset.share);
+    if(it){
+      copyText(shareTextFor(it)).then(ok=>{
+        toast(ok ? '已复制卡片文字，粘贴即可分享' : '复制失败，请手动复制');
+      });
+    }
+    return;
+  }
+  // 分享全部
   if(t.id==='shareBtn'){ sharePage(); return; }
 });
 
