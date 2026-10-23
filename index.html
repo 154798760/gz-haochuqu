@@ -256,32 +256,28 @@ footer .disclaimer{color:#9aa79f;}
     <div class="weather-card" id="weatherCard">
       <div class="weather-head">
         <span class="weather-title">🌤 本周天气适合指数</span>
-        <span class="weather-index">前段 <b>86</b> · 后段 <b>90</b>/100</span>
+        <span class="weather-index">前段 <b>95</b> · 后段 <b>94</b>/100</span>
         <button class="weather-toggle" type="button" aria-expanded="false">点击展开天气详情</button>
       </div>
       <div class="weather-split">
         <div class="weather-slot rain">
-          <span class="slot-t">🌧 本周末（10/17–18）多云为主、局部短时小雨</span>
-          出门建议带把伞，午后偏热、早晚清凉
+          <span class="slot-t">☀️ 10/24–10/26（21–32℃）晴好少雨</span>
+          适合户外古街/公园/citywalk，注意防晒
         </div>
         <div class="weather-slot sun">
-          <span class="slot-t">☀️ 10/19–22 晴到多云（21–33℃）</span>
-          昼夜温差加大，21–22 弱冷空气小幅降温
+          <span class="slot-t">🌦 10/27–10/29（22–33℃）局部小雨，降水概率约4%</span>
+          随身带把折叠伞，午后偏热注意补水
         </div>
       </div>
       <div class="weather-bar">
         <div class="weather-bar-label"><span>晴好适宜度</span><span id="weatherBarText">前段较低 · 后段高</span></div>
         <div class="weather-bar-track">
-          <div class="weather-bar-seg rain" style="width:0%;"></div>
-          <div class="weather-bar-seg sun" style="width:100%;"></div>
+          <div class="weather-bar-seg rain" style="width:1%;"></div>
+          <div class="weather-bar-seg sun" style="width:99%;"></div>
         </div>
       </div>
-      <div class="weather-tip">前段雨天室内优先 → 后段秋高气爽户外最佳</div>
-      <div class="weather-detail" id="weatherDetail">
-        10/17 多云局部小雨 23–32℃（早晨轻雾）；10/18 多云局部小雨 24–32℃（早晚轻雾）；10/19 晴 24–33℃；10/20 多云 21–33℃（19–20空气轻度污染，敏感人群注意）；10/21–22 弱冷空气、气温小幅下降 22–32℃；10/23 前后有雨预期。<br>
-        本周末白天偏热（最高32℃）、早晚清凉，局部短时小雨出门带伞，防晒补水照常。<br>
-        美食周（至10/19）收官倒计时，傍晚逛吃最舒服；陈粒演唱会、长征90周年展、龙舟非遗手作课、周末市集都适合安排。
-      </div>
+      <div class="weather-tip">整段适合出门，周末安排户外或室内都从容</div>
+      <div class="weather-detail" id="weatherDetail">10/24 阴 21–31℃（降水概率0%）；10/25 阴 21–32℃（降水概率0%）；10/26 阴 23–32℃（降水概率4%）。<br>10/27 阴 23–32℃（降水概率2%）；10/28 小毛毛雨 22–31℃（降水概率4%）；10/29 阴 23–33℃（降水概率4%）。<br>整段天气晴好适宜，昼夜温差渐大，早晚加件薄外套即可。</div>
     </div>
 
     <section class="hot-section" aria-label="各标签热门推荐">
@@ -447,7 +443,7 @@ const HOT_TOPIC = [
 
 /* ================= 状态 ================= */
 // 内容更新时间（定时任务每次生成时自动更新为当天日期）
-const UPDATED = '2026-10-16';
+const UPDATED = '2026-10-23';
 const TODAY = new Date();
 const fmt = d => d.toISOString().slice(0,10);
 let timeDays = 14;
