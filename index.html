@@ -256,28 +256,28 @@ footer .disclaimer{color:#9aa79f;}
     <div class="weather-card" id="weatherCard">
       <div class="weather-head">
         <span class="weather-title">🌤 本周天气适合指数</span>
-        <span class="weather-index">前段 <b>95</b> · 后段 <b>94</b>/100</span>
+        <span class="weather-index">前段 <b>95</b> · 后段 <b>95</b>/100</span>
         <button class="weather-toggle" type="button" aria-expanded="false">点击展开天气详情</button>
       </div>
       <div class="weather-split">
         <div class="weather-slot rain">
-          <span class="slot-t">☀️ 10/24–10/26（21–32℃）晴好少雨</span>
-          适合户外古街/公园/citywalk，注意防晒
+          <span class="slot-t">🌦 10/26–10/28（21–32℃）局部小雨，降水概率约6%</span>
+          随身带把折叠伞，午后偏热注意补水
         </div>
         <div class="weather-slot sun">
-          <span class="slot-t">🌦 10/27–10/29（22–33℃）局部小雨，降水概率约4%</span>
-          随身带把折叠伞，午后偏热注意补水
+          <span class="slot-t">☀️ 10/29–10/31（22–33℃）晴好少雨</span>
+          适合户外古街/公园/citywalk，注意防晒
         </div>
       </div>
       <div class="weather-bar">
         <div class="weather-bar-label"><span>晴好适宜度</span><span id="weatherBarText">前段较低 · 后段高</span></div>
         <div class="weather-bar-track">
-          <div class="weather-bar-seg rain" style="width:1%;"></div>
-          <div class="weather-bar-seg sun" style="width:99%;"></div>
+          <div class="weather-bar-seg rain" style="width:2%;"></div>
+          <div class="weather-bar-seg sun" style="width:98%;"></div>
         </div>
       </div>
       <div class="weather-tip">整段适合出门，周末安排户外或室内都从容</div>
-      <div class="weather-detail" id="weatherDetail">10/24 阴 21–31℃（降水概率0%）；10/25 阴 21–32℃（降水概率0%）；10/26 阴 23–32℃（降水概率4%）。<br>10/27 阴 23–32℃（降水概率2%）；10/28 小毛毛雨 22–31℃（降水概率4%）；10/29 阴 23–33℃（降水概率4%）。<br>整段天气晴好适宜，昼夜温差渐大，早晚加件薄外套即可。</div>
+      <div class="weather-detail" id="weatherDetail">10/26 大部晴 21–32℃（降水概率0%）；10/27 阴 23–32℃（降水概率0%）；10/28 小毛毛雨 22–30℃（降水概率6%）。<br>10/29 阴 22–32℃（降水概率0%）；10/30 阴 23–33℃（降水概率0%）；10/31 大部晴 23–33℃（降水概率0%）。<br>整段天气晴好适宜，昼夜温差渐大，早晚加件薄外套即可。</div>
     </div>
 
     <section class="hot-section" aria-label="各标签热门推荐">
@@ -443,7 +443,7 @@ const HOT_TOPIC = [
 
 /* ================= 状态 ================= */
 // 内容更新时间（定时任务每次生成时自动更新为当天日期）
-const UPDATED = '2026-10-23';
+const UPDATED = '2026-10-25';
 const TODAY = new Date();
 const fmt = d => d.toISOString().slice(0,10);
 let timeDays = 14;
