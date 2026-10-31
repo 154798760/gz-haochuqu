@@ -256,28 +256,28 @@ footer .disclaimer{color:#9aa79f;}
     <div class="weather-card" id="weatherCard">
       <div class="weather-head">
         <span class="weather-title">🌤 本周天气适合指数</span>
-        <span class="weather-index">前段 <b>89</b> · 后段 <b>79</b>/100</span>
+        <span class="weather-index">前段 <b>69</b> · 后段 <b>58</b>/100</span>
         <button class="weather-toggle" type="button" aria-expanded="false">点击展开天气详情</button>
       </div>
       <div class="weather-split">
         <div class="weather-slot rain">
-          <span class="slot-t">🌦 10/30–11/1（23–33℃）局部小雨，降水概率约33%</span>
-          随身带把折叠伞，午后偏热注意补水
+          <span class="slot-t">🌧 11/1–11/3（23–31℃）有雨，降水概率约69%</span>
+          出门带伞，雨中活动选室内展/市集更稳妥
         </div>
         <div class="weather-slot sun">
-          <span class="slot-t">🌦 11/2–11/4（23–33℃）局部小雨，降水概率约38%</span>
-          随身带把折叠伞，午后偏热注意补水
+          <span class="slot-t">🌧 11/4–11/6（22–30℃）有雨，降水概率约83%</span>
+          出门带伞，雨中活动选室内展/市集更稳妥
         </div>
       </div>
       <div class="weather-bar">
         <div class="weather-bar-label"><span>晴好适宜度</span><span id="weatherBarText">前段较低 · 后段高</span></div>
         <div class="weather-bar-track">
-          <div class="weather-bar-seg rain" style="width:11%;"></div>
-          <div class="weather-bar-seg sun" style="width:89%;"></div>
+          <div class="weather-bar-seg rain" style="width:49%;"></div>
+          <div class="weather-bar-seg sun" style="width:51%;"></div>
         </div>
       </div>
-      <div class="weather-tip">整段适合出门，周末安排户外或室内都从容</div>
-      <div class="weather-detail" id="weatherDetail">10/30 阴 23–33℃（降水概率0%）；10/31 多云 23–32℃（降水概率0%）；11/1 小毛毛雨 23–32℃（降水概率33%）。<br>11/2 阴 24–33℃（降水概率38%）；11/3 小毛毛雨 24–32℃（降水概率24%）；11/4 阴 23–31℃（降水概率25%）。<br>整段天气晴好适宜，昼夜温差渐大，早晚加件薄外套即可。</div>
+      <div class="weather-tip">前段有雨室内优先 → 后段晴好户外最佳</div>
+      <div class="weather-detail" id="weatherDetail">11/1 阴 23–31℃（降水概率12%）；11/2 小阵雨 24–31℃（降水概率67%）；11/3 毛毛雨 23–30℃（降水概率69%）。<br>11/4 小阵雨 23–30℃（降水概率83%）；11/5 毛毛雨 24–30℃（降水概率71%）；11/6 毛毛雨 22–30℃（降水概率51%）。<br>前段有雨优先安排展览/电影/市集等室内活动，后段转晴后适合户外出行。</div>
     </div>
 
     <section class="hot-section" aria-label="各标签热门推荐">
@@ -443,7 +443,7 @@ const HOT_TOPIC = [
 
 /* ================= 状态 ================= */
 // 内容更新时间（定时任务每次生成时自动更新为当天日期）
-const UPDATED = '2026-10-29';
+const UPDATED = '2026-10-31';
 const TODAY = new Date();
 const fmt = d => d.toISOString().slice(0,10);
 let timeDays = 14;
