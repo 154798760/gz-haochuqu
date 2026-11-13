@@ -256,28 +256,28 @@ footer .disclaimer{color:#9aa79f;}
     <div class="weather-card" id="weatherCard">
       <div class="weather-head">
         <span class="weather-title">🌤 本周天气适合指数</span>
-        <span class="weather-index">前段 <b>62</b> · 后段 <b>59</b>/100</span>
+        <span class="weather-index">前段 <b>78</b> · 后段 <b>72</b>/100</span>
         <button class="weather-toggle" type="button" aria-expanded="false">点击展开天气详情</button>
       </div>
       <div class="weather-split">
         <div class="weather-slot rain">
-          <span class="slot-t">🌧 11/12–11/14（16–27℃）有雨，降水概率约93%</span>
+          <span class="slot-t">🌧 11/15–11/17（19–27℃）有雨，降水概率约68%</span>
           出门带伞，雨中活动选室内展/市集更稳妥
         </div>
         <div class="weather-slot sun">
-          <span class="slot-t">🌧 11/15–11/17（19–28℃）有雨，降水概率约90%</span>
+          <span class="slot-t">🌧 11/18–11/20（15–23℃）有雨，降水概率约86%</span>
           出门带伞，雨中活动选室内展/市集更稳妥
         </div>
       </div>
       <div class="weather-bar">
         <div class="weather-bar-label"><span>晴好适宜度</span><span id="weatherBarText">前段较低 · 后段高</span></div>
         <div class="weather-bar-track">
-          <div class="weather-bar-seg rain" style="width:61%;"></div>
-          <div class="weather-bar-seg sun" style="width:39%;"></div>
+          <div class="weather-bar-seg rain" style="width:33%;"></div>
+          <div class="weather-bar-seg sun" style="width:67%;"></div>
         </div>
       </div>
-      <div class="weather-tip">前段有雨室内优先 → 后段晴好户外最佳</div>
-      <div class="weather-detail" id="weatherDetail">11/12 阴 16–27℃（降水概率0%）；11/13 阵雨 20–26℃（降水概率90%）；11/14 强阵雨 18–27℃（降水概率93%）。<br>11/15 大部晴 19–27℃（降水概率39%）；11/16 毛毛雨 21–25℃（降水概率90%）；11/17 毛毛雨 21–28℃（降水概率75%）。<br>前段有雨优先安排展览/电影/市集等室内活动，后段转晴后适合户外出行。</div>
+      <div class="weather-tip">整段适合出门，周末安排户外或室内都从容</div>
+      <div class="weather-detail" id="weatherDetail">11/15 多云 19–27℃（降水概率2%）；11/16 小毛毛雨 20–26℃（降水概率30%）；11/17 小毛毛雨 21–27℃（降水概率68%）。<br>11/18 大毛毛雨 16–23℃（降水概率86%）；11/19 阴 15–17℃（降水概率21%）；11/20 阴 15–22℃（降水概率22%）。<br>整段天气晴好适宜，昼夜温差渐大，早晚加件薄外套即可。</div>
     </div>
 
     <section class="hot-section" aria-label="各标签热门推荐">
@@ -443,7 +443,7 @@ const HOT_TOPIC = [
 
 /* ================= 状态 ================= */
 // 内容更新时间（定时任务每次生成时自动更新为当天日期）
-const UPDATED = '2026-11-11';
+const UPDATED = '2026-11-14';
 const TODAY = new Date();
 const fmt = d => d.toISOString().slice(0,10);
 let timeDays = 14;
